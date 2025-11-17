@@ -201,28 +201,27 @@ document.addEventListener("DOMContentLoaded", function() {
 
   const mainImg = document.getElementById("MainImage");
 
-  /* ========= GALLERY ELEMENTS ========= */
+  /* ========= POPUP GALLERY ELEMENTS ========= */
   const galleryModal = document.getElementById("ImageGalleryModal");
-  const galleryContent = document.getElementById("ImageGalleryCarousel");
+  const galleryGrid = document.getElementById("ImageGalleryGrid");
   const galleryClose = document.getElementById("ImageGalleryClose");
   const galleryBackdrop = document.querySelector(".image-gallery-backdrop");
 
-  /* ========= SIZE CHART ELEMENTS ========= */
+  /* ========= SIZE CHART ========= */
   const sizeModal = document.getElementById("SizeChartModal");
   const sizeBtn = document.getElementById("SizeChartButton");
   const sizeClose = document.getElementById("SizeChartClose");
   const sizeBackdrop = document.querySelector(".size-chart-backdrop");
 
-  /* ========= CLEAN URL HELPER ========= */
   function clean(url) {
     return url ? url.split("?")[0] : "";
   }
 
-  /* ========= SIDE THUMBNAILS CLICK ========= */
+  /* ========= THUMBNAILS ========= */
   function setupThumbnailClicks() {
     document.querySelectorAll(".product-thumb").forEach(btn => {
       if (btn.classList.contains("product-thumb-more")) {
-        btn.onclick = openFullGallery;
+        btn.onclick = openPopupGallery;
         return;
       }
 
@@ -240,63 +239,58 @@ document.addEventListener("DOMContentLoaded", function() {
 
   setupThumbnailClicks();
 
-    function openPopupGallery() {
+  /* ========= POPUP GALLERY CLEAN FIX ========= */
+  function openPopupGallery() {
     galleryGrid.innerHTML = "";
 
     product.media.forEach(m => {
-        const img = document.createElement("img");
-        img.src = m.src;
-        img.className = "image-gallery-item";
-        galleryGrid.appendChild(img);
+      const img = document.createElement("img");
+      img.src = clean(m.src);
+      img.className = "image-gallery-item";
+      galleryGrid.appendChild(img);
     });
 
     galleryModal.classList.add("is-open");
-    }
+  }
 
-    document.querySelectorAll(".product-thumb-more").forEach(btn => {
-    btn.onclick = openPopupGallery;
-    });
+  galleryClose.onclick = () => galleryModal.classList.remove("is-open");
+  galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
 
-    if (galleryClose) galleryClose.onclick = () => galleryModal.classList.remove("is-open");
-    if (galleryBackdrop) galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
-
-
-  /* ========= COLOR SWITCHING WITH VARIANT UPDATE ========= */
+  /* ========= COLOR SWITCHING ========= */
   document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.addEventListener("click", () => {
 
       const value = btn.dataset.optionValue;
 
-      // UI update
-      document.querySelectorAll(".color-swatch").forEach(x => x.classList.remove("is-active"));
+      document.querySelectorAll(".color-swatch")
+        .forEach(x => x.classList.remove("is-active"));
+
       btn.classList.add("is-active");
       document.getElementById("SelectedColor").textContent = value;
 
       selectedOptions[0] = value;
 
-      // find variant
       let newVariant = product.variants.find(v =>
         JSON.stringify(v.options) === JSON.stringify(selectedOptions)
       );
 
       if (newVariant) currentVariant = newVariant;
 
-      // update image
-      if (currentVariant.featured_media) {
+      if (currentVariant.featured_media)
         mainImg.src = clean(currentVariant.featured_media.preview_image.src);
-      }
     });
   });
 
-  /* ========= SIZE SWITCHING FIXED ========= */
+  /* ========= SIZE SWITCHING ========= */
   document.querySelectorAll(".size-pill").forEach(btn => {
     btn.addEventListener("click", () => {
 
       const value = btn.dataset.optionValue;
 
-      document.querySelectorAll(".size-pill").forEach(x => x.classList.remove("is-active"));
-      btn.classList.add("is-active");
+      document.querySelectorAll(".size-pill")
+        .forEach(x => x.classList.remove("is-active"));
 
+      btn.classList.add("is-active");
       document.getElementById("SelectedSize").textContent = value;
 
       selectedOptions[1] = value;
@@ -309,7 +303,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  /* ========= SIZE CHART FIXED ========= */
+  /* ========= SIZE CHART ========= */
   if (sizeBtn) sizeBtn.onclick = () => sizeModal.classList.add("is-open");
   if (sizeClose) sizeClose.onclick = () => sizeModal.classList.remove("is-open");
   if (sizeBackdrop) sizeBackdrop.onclick = () => sizeModal.classList.remove("is-open");
