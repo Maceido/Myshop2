@@ -656,3 +656,22 @@ body {
   cursor: pointer;
 }
 
+.size-chart-grid table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.size-chart-grid th,
+.size-chart-grid td {
+  padding: 8px;
+  border: 1px solid #e5e5e5;
+  text-align: center;
+  font-size: 14px;
+}
+
+.size-chart-grid th {
+  background: #f7f7f7;
+  font-weight: 600;
+}
+
