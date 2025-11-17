@@ -1,90 +1,67 @@
 <!-- PRODUCT PAGE LAYOUT -->
 <section class="product-page">
-<div class="product-gallery">
 
-  <!-- SIDE THUMBNAILS (DYNAMIC) -->
-  <div class="product-gallery-side" id="SideThumbs">
-    {% assign default_variant = product.selected_or_first_available_variant %}
+  <!-- LEFT COLUMN: GALLERY -->
+  <div class="product-gallery">
 
-    {% if default_variant.featured_media %}
-      {% assign variant_media = default_variant.featured_media | media_image_url: width: 1200 %}
+    {% assign current_variant = product.selected_or_first_available_variant %}
+    {% assign variant_media = product.media | where: "variant_ids", current_variant.id %}
+
+    {% if variant_media.size == 0 %}
+      {% assign variant_media = product.media %}
     {% endif %}
 
-    {% comment %}
-      Collect all media for this variant
-    {% endcomment %}
-    {% assign variant_media_list = "" %}
-    {% for m in product.media %}
-      {% if m.variant_ids contains default_variant.id %}
-        {% assign variant_media_list = variant_media_list | append: m | append: ',' %}
-      {% endif %}
-    {% endfor %}
-
-    {% assign variant_media_array = variant_media_list | split: ',' %}
     {% assign max_thumbs = 5 %}
 
-    {% if variant_media_array.size > 1 %}
-      {% for img in variant_media_array %}
-        {% if forloop.index0 < max_thumbs %}
-          <button 
-            type="button"
-            class="product-thumb{% if forloop.first %} is-active{% endif %}"
-            data-media-src="{{ img | image_url: width: 1200 }}"
-          >
-            <img src="{{ img | image_url: width: 120 }}" alt="">
-          </button>
-        {% elsif forloop.index0 == max_thumbs %}
-          <button type="button" class="product-thumb product-thumb-more" data-more="true">
-            +{{ variant_media_array.size | minus: max_thumbs }}
-          </button>
-          {% break %}
-        {% endif %}
-      {% endfor %}
-    {% else %}
-      {% comment %} fallback: all media {% endcomment %}
-      {% for media in product.media %}
+    <!-- SIDE THUMBNAILS -->
+    <div class="product-gallery-side" id="SideThumbs">
+      {% for media in variant_media %}
         {% if forloop.index0 < max_thumbs %}
           <button 
             type="button"
             class="product-thumb{% if forloop.first %} is-active{% endif %}"
             data-media-src="{{ media | image_url: width: 1200 }}"
           >
-            <img src="{{ media | image_url: width: 120 }}" alt="">
+            <img src="{{ media | image_url: width: 120 }}">
           </button>
         {% elsif forloop.index0 == max_thumbs %}
-          <button type="button" class="product-thumb product-thumb-more" data-more="true">
-            +{{ product.media.size | minus: max_thumbs }}
+          <button 
+            type="button" 
+            class="product-thumb product-thumb-more" 
+            data-more="true"
+          >
+            +{{ variant_media.size | minus: max_thumbs }}
           </button>
           {% break %}
         {% endif %}
       {% endfor %}
-    {% endif %}
-  </div>
+    </div>
 
-  <!-- MAIN IMAGE -->
-  {% assign first_media = product.selected_or_first_available_variant.featured_media | default: product.media.first %}
-  <div class="product-gallery-main">
-    <img 
-      id="MainImage"
-      class="product-main-image"
-      src="{{ first_media | image_url: width: 1200 }}"
-      alt="{{ product.title }}"
-    >
-  </div>
+    <!-- MAIN IMAGE -->
+    <div class="product-gallery-main">
+      <img 
+        id="MainImage"
+        class="product-main-image"
+        src="{{ variant_media.first | image_url: width: 1200 }}"
+        alt="{{ product.title }}"
+      >
+    </div>
 
-</div>
+  </div> <!-- END LEFT COLUMN -->
 
 
 
-  <!-- MIDDLE COLUMN: TITLE, OPTIONS, DETAILS -->
+  <!-- MIDDLE COLUMN -->
   <div class="product-main-info">
 
     <h1 class="product-title">{{ product.title }}</h1>
 
+    <!-- Fake rating placeholder -->
     <div class="product-rating-placeholder">
       ★★★★☆ <span>Rating coming soon</span>
     </div>
 
+    <!-- Price -->
     <div class="product-price-main" id="PriceMain">
       {{ product.selected_or_first_available_variant.price | money }}
     </div>
@@ -93,10 +70,11 @@
 
     <div class="product-selector">
 
-      <!-- COLOR OPTION -->
+      <!-- COLOR -->
       {% if option_count >= 1 %}
         {% assign color_opt = product.options_with_values[0] %}
         <div class="selector-block">
+
           <div class="selector-label-row">
             <div class="selector-label">
               Color:
@@ -106,7 +84,7 @@
 
           <div class="color-swatch-grid">
             {% for value in color_opt.values %}
-              
+
               {% assign swatch_img = blank %}
               {% for v in product.variants %}
                 {% if v.option1 == value and v.featured_media %}
@@ -119,8 +97,7 @@
                 type="button"
                 class="color-swatch{% if color_opt.selected_value == value %} is-active{% endif %}"
                 data-option-index="0"
-                data-option-value="{{ value | escape }}"
-                data-media-src="{{ swatch_img }}"
+                data-option-value="{{ value }}"
               >
                 {% if swatch_img %}
                   <img src="{{ swatch_img | img_url: '120x' }}">
@@ -130,47 +107,54 @@
 
             {% endfor %}
           </div>
+
         </div>
       {% endif %}
 
-      <!-- SIZE OPTION -->
-    {% if option_count >= 2 %}
-    {% assign size_opt = product.options_with_values[1] %}
-    {% else %}
-    {% assign size_opt = blank %}
-    {% endif %}
 
-    {% if size_opt %}
-    <div class="selector-block">
-        <div class="selector-label-row">
-        <div class="selector-label">
-            Size:
-            <span id="SelectedSize">{{ size_opt.selected_value }}</span>
-        </div>
 
-        <button type="button" class="size-chart-link" id="SizeChartButton">
-            Size chart
-        </button>
-        </div>
+      <!-- SIZE -->
+      {% if option_count >= 2 %}
+        {% assign size_opt = product.options_with_values[1] %}
+      {% else %}
+        {% assign size_opt = blank %}
+      {% endif %}
 
-        <div class="size-pill-grid">
-        {% for value in size_opt.values %}
-            <button
-            type="button"
-            class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
-            data-option-index="1"
-            data-option-value="{{ value }}"
-            >
-            {{ value }}
+      {% if size_opt %}
+        <div class="selector-block">
+
+          <div class="selector-label-row">
+            <div class="selector-label">
+              Size:
+              <span id="SelectedSize">{{ size_opt.selected_value }}</span>
+            </div>
+
+            <button type="button" class="size-chart-link" id="SizeChartButton">
+              Size chart
             </button>
-        {% endfor %}
+          </div>
+
+          <div class="size-pill-grid">
+            {% for value in size_opt.values %}
+              <button
+                type="button"
+                class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
+                data-option-index="1"
+                data-option-value="{{ value }}"
+              >
+                {{ value }}
+              </button>
+            {% endfor %}
+          </div>
+
         </div>
+      {% endif %}
+
     </div>
-    {% endif %}
 
 
 
-    <!-- PRODUCT DETAILS (NO IMAGES ALLOWED) -->
+    <!-- PRODUCT DETAILS (NO IMAGES) -->
     <div class="product-details-section">
       <h3>Product details</h3>
       <div class="product-details-content">
@@ -186,7 +170,7 @@
       <p>{{ product.title }} with multiple styles and sizes available.</p>
     </div>
 
-  </div> <!-- END MIDDLE COLUMN -->
+  </div><!-- END MIDDLE -->
 
 
   <!-- RIGHT COLUMN: BUY BOX -->
@@ -197,7 +181,7 @@
     </div>
 
     <div class="buy-box-delivery">
-      Delivery time shown at checkout
+      Delivery shown at checkout
       <div class="buy-box-location">
         {% if customer and customer.default_address %}
           Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
@@ -216,7 +200,9 @@
     </div>
 
     {% form 'product', product, id: 'ProductForm' %}
-      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+      <input type="hidden"
+             name="id"
+             value="{{ product.selected_or_first_available_variant.id }}">
 
       <div class="buy-box-quantity">
         <label>Quantity:</label>
@@ -235,10 +221,10 @@
 </section>
 
 
-
 <!-- FULLSCREEN IMAGE GALLERY -->
 <div class="image-gallery-modal" id="ImageGalleryModal">
   <div class="image-gallery-backdrop"></div>
+
   <div class="image-gallery-content">
     <button id="ImageGalleryClose" class="image-gallery-close">×</button>
 
@@ -257,34 +243,31 @@
   <div class="size-chart-content">
     <button id="SizeChartClose" class="size-chart-close">×</button>
     <h3>Size Chart</h3>
-    <!-- SIZE CHART GRID (NO IMAGE REQUIRED) -->
+
     <div class="size-chart-grid">
-    <table>
+      <table>
         <thead>
-        <tr>
+          <tr>
             <th>Size</th>
             <th>Chest (in)</th>
             <th>Chest (cm)</th>
             <th>Length (in)</th>
             <th>Length (cm)</th>
-        </tr>
+          </tr>
         </thead>
-
         <tbody>
-        {% assign chart = product.metafields.specs.size_chart %}
-
-        {% if chart %}
+          {% assign chart = product.metafields.specs.size_chart %}
+          {% if chart %}
             {{ chart | metafield_text }}
-        {% else %}
-            <!-- FALLBACK AUTO GRID -->
+          {% else %}
             <tr><td>S</td><td>34–36</td><td>86–91</td><td>26</td><td>66</td></tr>
             <tr><td>M</td><td>38–40</td><td>96–102</td><td>27</td><td>68.5</td></tr>
             <tr><td>L</td><td>42–44</td><td>107–112</td><td>28</td><td>71</td></tr>
             <tr><td>XL</td><td>46–48</td><td>117–122</td><td>29</td><td>73.5</td></tr>
             <tr><td>XXL</td><td>50–52</td><td>127–132</td><td>30</td><td>76</td></tr>
-        {% endif %}
+          {% endif %}
         </tbody>
-    </table>
+      </table>
     </div>
   </div>
 </div>
@@ -300,20 +283,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const mainImg = document.getElementById("MainImage");
   const thumbsContainer = document.getElementById("SideThumbs");
 
-  /** GET IMAGES FOR VARIANT */
   function getVariantMedia(variantId) {
-    const variantMedia = product.media.filter(m =>
+    let media = product.media.filter(m =>
       m.variant_ids && m.variant_ids.includes(variantId)
     );
-    return variantMedia.length > 0 ? variantMedia : product.media;
+    if (media.length === 0) media = product.media;
+    return media;
   }
 
-  /** SET MAIN IMAGE */
   function setMain(src) {
     mainImg.src = src.split("?")[0];
   }
 
-  /** RENDER THUMBNAILS FOR CURRENT VARIANT */
+  function attachThumbEvents() {
+    document.querySelectorAll(".product-thumb:not(.product-thumb-more)").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const src = btn.dataset.mediaSrc;
+        document.querySelectorAll(".product-thumb").forEach(b => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        setMain(src);
+      });
+    });
+  }
+
   function renderThumbs(variant) {
     const media = getVariantMedia(variant.id);
     thumbsContainer.innerHTML = "";
@@ -326,8 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="product-thumb ${i === 0 ? "is-active" : ""}"
                   data-media-src="${m.src}">
             <img src="${m.src}" width="120">
-          </button>
-        `;
+          </button>`;
       }
     });
 
@@ -335,43 +326,24 @@ document.addEventListener("DOMContentLoaded", () => {
       thumbsContainer.innerHTML += `
         <button class="product-thumb product-thumb-more" data-more="true">
           +${media.length - max}
-        </button>
-      `;
+        </button>`;
     }
 
-    // Update main image
     setMain(media[0].src);
-
-    // reattach events
     attachThumbEvents();
   }
 
-  /** THUMB CLICK EVENTS *
-  function attachThumbEvents() {
-    document.querySelectorAll(".product-thumb:not(.product-thumb-more)").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const src = btn.dataset.mediaSrc;
-        setMain(src);
-        document.querySelectorAll(".product-thumb").forEach(b => b.classList.remove("is-active"));
-        btn.classList.add("is-active");
-      });
-    });
-  }
-
-  /** FIND VARIANT */
   function findVariant() {
     return product.variants.find(v =>
       JSON.stringify(v.options) === JSON.stringify(selectedOptions)
     ) || product.variants[0];
   }
 
-  /** UPDATE VARIANT */
   function updateVariant() {
     const v = findVariant();
     renderThumbs(v);
   }
 
-  /** COLOR CHANGE */
   document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.addEventListener("click", () => {
       const idx = btn.dataset.optionIndex;
@@ -382,11 +354,12 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".color-swatch").forEach(b => b.classList.remove("is-active"));
       btn.classList.add("is-active");
 
+      document.getElementById("SelectedColor").textContent = val;
+
       updateVariant();
     });
   });
 
-  // INITIAL LOAD
   updateVariant();
 });
 </script>
