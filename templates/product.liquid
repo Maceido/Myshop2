@@ -6,47 +6,22 @@
   <!-- LEFT COLUMN: GALLERY -->
   <div class="product-gallery">
 
-    <!-- SIDE THUMBNAILS (WILL BE REPLACED BY JS) -->
+    <!-- SIDE THUMBNAILS -->
     <div class="product-gallery-side" id="SideThumbs">
-      {%- assign max_thumbs = 5 -%}
-
-      {%- assign initial_media = product.media | where: "variant_ids", initial_variant.id -%}
-      {%- if initial_media.size == 0 -%}
-        {%- assign initial_media = product.media -%}
-      {%- endif -%}
-
-      {%- for media in initial_media -%}
-        {%- if forloop.index0 < max_thumbs -%}
-          <button 
-            type="button" 
-            class="product-thumb{% if forloop.first %} is-active{% endif %}"
-            data-media-src="{{ media | image_url: width: 1200 }}"
-          >
-            <img src="{{ media | image_url: width: 120 }}">
-          </button>
-        {%- endif -%}
-      {%- endfor -%}
-
-      {%- if initial_media.size > max_thumbs -%}
-        <button type="button" class="product-thumb product-thumb-more">
-          +{{ initial_media.size | minus: max_thumbs }}
-        </button>
-      {%- endif -%}
+      <!-- JS will render based on variant -->
     </div>
 
     <!-- MAIN IMAGE -->
     <div class="product-gallery-main">
-      {%- assign main_media = initial_variant.featured_media | default: product.media.first -%}
       <img 
         id="MainImage"
         class="product-main-image"
-        src="{{ main_media | image_url: width: 1200 }}"
+        src="{{ initial_variant.featured_media.preview_image.src | image_url: width: 1200 }}"
         alt="{{ product.title }}"
       >
     </div>
 
-  </div> <!-- END GALLERY -->
-
+  </div>
 
 
   <!-- MIDDLE COLUMN -->
@@ -65,8 +40,8 @@
     <div class="product-selector">
 
       <!-- COLOR OPTION -->
-      {%- if option_count >= 1 -%}
-        {%- assign color_opt = product.options_with_values[0] -%}
+      {% if option_count >= 1 %}
+        {% assign color_opt = product.options_with_values[0] %}
 
         <div class="selector-block">
           <div class="selector-label-row">
@@ -76,15 +51,15 @@
           </div>
 
           <div class="color-swatch-grid">
-            {%- for value in color_opt.values -%}
+            {% for value in color_opt.values %}
 
-              {%- assign swatch_img = blank -%}
-              {%- for v in product.variants -%}
-                {%- if v.option1 == value and v.featured_media -%}
-                  {%- assign swatch_img = v.featured_media.preview_image.src -%}
-                  {%- break -%}
-                {%- endif -%}
-              {%- endfor -%}
+              {% assign swatch_img = blank %}
+              {% for v in product.variants %}
+                {% if v.option1 == value and v.featured_media %}
+                  {% assign swatch_img = v.featured_media.preview_image.src %}
+                  {% break %}
+                {% endif %}
+              {% endfor %}
 
               <button 
                 type="button"
@@ -92,22 +67,21 @@
                 data-option-index="0"
                 data-option-value="{{ value }}"
               >
-                {%- if swatch_img -%}
+                {% if swatch_img %}
                   <img src="{{ swatch_img | img_url: '120x' }}">
-                {%- endif -%}
+                {% endif %}
                 <span>{{ value }}</span>
               </button>
 
-            {%- endfor -%}
+            {% endfor %}
           </div>
         </div>
-      {%- endif -%}
 
-
+      {% endif %}
 
       <!-- SIZE OPTION -->
-      {%- if option_count >= 2 -%}
-        {%- assign size_opt = product.options_with_values[1] -%}
+      {% if option_count >= 2 %}
+        {% assign size_opt = product.options_with_values[1] %}
 
         <div class="selector-block">
           <div class="selector-label-row">
@@ -119,7 +93,7 @@
           </div>
 
           <div class="size-pill-grid">
-            {%- for value in size_opt.values -%}
+            {% for value in size_opt.values %}
               <button 
                 type="button"
                 class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
@@ -128,24 +102,23 @@
               >
                 {{ value }}
               </button>
-            {%- endfor -%}
+            {% endfor %}
           </div>
         </div>
 
-      {%- endif -%}
+      {% endif %}
 
     </div>
-
-
 
     <!-- PRODUCT DETAILS -->
     <div class="product-details-section">
       <h3>Product details</h3>
       <div class="product-details-content">
         {{ product.description 
-          | replace: '<img', '<!--img' 
+          | replace: '<img', '<!--img'
           | replace: 'src=', 'Xsrc='
-          | strip_html }}
+          | strip_html
+        }}
       </div>
     </div>
 
@@ -155,7 +128,6 @@
     </div>
 
   </div>
-
 
 
   <!-- RIGHT COLUMN -->
@@ -181,7 +153,7 @@
     </div>
 
     {% form 'product', product, id: 'ProductForm' %}
-      <input type="hidden" name="id" id="VariantIdInput" value="{{ initial_variant.id }}">
+      <input type="hidden" id="VariantIdInput" name="id" value="{{ initial_variant.id }}">
 
       <div class="buy-box-quantity">
         <label>Quantity:</label>
@@ -199,8 +171,7 @@
 </section>
 
 
-
-<!-- FULLSCREEN GALLERY -->
+<!-- FULLSCREEN IMAGE GALLERY -->
 <div class="image-gallery-modal" id="ImageGalleryModal">
   <div class="image-gallery-backdrop"></div>
   <div class="image-gallery-content">
@@ -222,6 +193,7 @@
 </div>
 
 
+
 <!-- JAVASCRIPT -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -237,80 +209,63 @@ document.addEventListener("DOMContentLoaded", function() {
   const stockBox = document.getElementById("StockBox");
   const qtySelect = document.getElementById("QtySelect");
   const variantIdInput = document.getElementById("VariantIdInput");
-  const buyNowBtn = document.getElementById("BuyNowBtn");
 
   const galleryModal = document.getElementById("ImageGalleryModal");
   const galleryCarousel = document.getElementById("ImageGalleryCarousel");
-  const galleryClose = document.getElementById("ImageGalleryClose");
-  const galleryBackdrop = document.querySelector(".image-gallery-backdrop");
-
-  const sizeModal = document.getElementById("SizeChartModal");
-  const sizeBtn = document.getElementById("SizeChartButton");
-  const sizeClose = document.getElementById("SizeChartClose");
-  const sizeBackdrop = document.querySelector(".size-chart-backdrop");
 
   function clean(url) {
     return url ? url.split("?")[0] : "";
   }
 
   function moneyFormat(cents) {
-    return (cents / 100).toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD"
-    });
+    return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
   }
 
-  function findVariantByOptions(opts) {
-    return product.variants.find(v =>
-      JSON.stringify(v.options) === JSON.stringify(opts)
-    ) || product.variants[0];
-  }
-
-  /* COLLECT IMAGES FOR CURRENT VARIANT */
-  function getMediaForVariant(variant) {
-    const colorName = (variant.options[0] || "").toLowerCase().trim();
-    const firstWord = colorName.split(" ")[0];
-
-    let mediaSet = [];
+  /* FOCUS: ONLY VARIANT IMAGES */
+  function getVariantImages(variant) {
+    let media = [];
 
     if (variant.featured_media) {
-      mediaSet.push({ src: clean(variant.featured_media.preview_image.src) });
+      media.push(clean(variant.featured_media.preview_image.src));
     }
 
     product.media.forEach(m => {
       if (Array.isArray(m.variant_ids) && m.variant_ids.includes(variant.id)) {
-        const fixed = clean(m.src);
-        if (!mediaSet.some(x => x.src === fixed)) mediaSet.push({ src: fixed });
+        media.push(clean(m.src));
       }
     });
 
-    product.media.forEach(m => {
-      const src = clean(m.src).toLowerCase();
-      const alt = (m.alt || "").toLowerCase();
-      if (src.includes(colorName) || alt.includes(colorName)) {
-        const fixed = clean(m.src);
-        if (!mediaSet.some(x => x.src === fixed)) mediaSet.push({ src: fixed });
-      }
-    });
+    // remove duplicates
+    media = [...new Set(media)];
 
-    product.media.forEach(m => {
-      const src = clean(m.src).toLowerCase();
-      const alt = (m.alt || "").toLowerCase();
-      if (src.includes(firstWord) || alt.includes(firstWord)) {
-        const fixed = clean(m.src);
-        if (!mediaSet.some(x => x.src === fixed)) mediaSet.push({ src: fixed });
-      }
-    });
-
-    if (mediaSet.length === 0) {
-      mediaSet = product.media.map(m => ({ src: clean(m.src) }));
+    // fallback if no variant images exist
+    if (media.length === 0) {
+      media = product.media.map(m => clean(m.src));
     }
 
-    return mediaSet;
+    return media;
   }
 
-  function setMainImage(src) {
-    mainImg.src = clean(src);
+  function renderThumbs(variant) {
+    const images = getVariantImages(variant);
+    thumbsContainer.innerHTML = "";
+
+    images.slice(0, 5).forEach((src, index) => {
+      thumbsContainer.innerHTML += `
+        <button class="product-thumb ${index === 0 ? "is-active" : ""}" data-media-src="${src}">
+          <img src="${src}" width="120">
+        </button>
+      `;
+    });
+
+    thumbsContainer.innerHTML += `
+      <button class="product-thumb product-thumb-more"/>
+        +${product.media.length - 0}
+      </button>
+    `;
+
+    setMainImage(images[0]);
+    attachThumbEvents();
   }
 
   function attachThumbEvents() {
@@ -318,73 +273,43 @@ document.addEventListener("DOMContentLoaded", function() {
 
     thumbs.forEach(btn => {
       btn.addEventListener("click", () => {
-        setMainImage(btn.dataset.mediaSrc);
-        thumbs.forEach(x => x.classList.remove("is-active"));
+        document.querySelectorAll(".product-thumb").forEach(x => x.classList.remove("is-active"));
         btn.classList.add("is-active");
+        setMainImage(btn.dataset.mediaSrc);
       });
     });
 
-    const moreBtn = thumbsContainer.querySelector(".product-thumb-more");
-    if (moreBtn) {
-      moreBtn.addEventListener("click", () => {
-        const media = getMediaForVariant(currentVariant);
-
+    const more = thumbsContainer.querySelector(".product-thumb-more");
+    if (more) {
+      more.addEventListener("click", () => {
         galleryCarousel.innerHTML = "";
-        media.forEach(m => {
-          const img = document.createElement("img");
-          img.src = clean(m.src);
-          img.className = "gallery-big-image";
-          galleryCarousel.appendChild(img);
+        product.media.forEach(m => {
+          galleryCarousel.innerHTML += `<img class="gallery-big-image" src="${clean(m.src)}">`;
         });
-
         galleryModal.classList.add("is-open");
       });
     }
   }
 
-  function renderThumbsForVariant(variant) {
-    const media = getMediaForVariant(variant);
-    thumbsContainer.innerHTML = "";
-
-    const max = 5;
-
-    media.forEach((m, index) => {
-      if (index < max) {
-        thumbsContainer.innerHTML += `
-          <button type="button"
-            class="product-thumb ${index === 0 ? "is-active" : ""}"
-            data-media-src="${m.src}">
-            <img src="${m.src}" width="120">
-          </button>
-        `;
-      }
-    });
-
-    if (media.length > max) {
-      thumbsContainer.innerHTML += `
-        <button class="product-thumb product-thumb-more" data-more="true">
-          +${media.length - max}
-        </button>
-      `;
-    }
-
-    setMainImage(media[0].src);
-    attachThumbEvents();
+  function setMainImage(src) {
+    mainImg.src = clean(src);
   }
 
-  function syncQuantity(v) {
+  function syncQty(v) {
     qtySelect.innerHTML = "";
     let max = v.inventory_management ? v.inventory_quantity : 50;
+    max = Math.min(max, 50);
     if (max < 1) max = 1;
-    if (max > 50) max = 50;
 
     for (let i = 1; i <= max; i++) {
       qtySelect.innerHTML += `<option value="${i}">${i}</option>`;
     }
   }
 
-  function updateVariantDetails() {
-    currentVariant = findVariantByOptions(selectedOptions);
+  function updateVariant() {
+    currentVariant = product.variants.find(v =>
+      JSON.stringify(v.options) === JSON.stringify(selectedOptions)
+    ) || product.variants[0];
 
     priceMain.textContent = moneyFormat(currentVariant.price);
     priceBox.textContent = moneyFormat(currentVariant.price);
@@ -394,50 +319,60 @@ document.addEventListener("DOMContentLoaded", function() {
 
     variantIdInput.value = currentVariant.id;
 
-    syncQuantity(currentVariant);
-
-    renderThumbsForVariant(currentVariant);
+    syncQty(currentVariant);
+    renderThumbs(currentVariant);
   }
 
+  // Color click
   document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.addEventListener("click", () => {
-      const idx = parseInt(btn.dataset.optionIndex);
-      const val = btn.dataset.optionValue;
+      selectedOptions[0] = btn.dataset.optionValue;
 
-      selectedOptions[idx] = val;
       document.querySelectorAll(".color-swatch").forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
 
-      document.getElementById("SelectedColor").textContent = val;
-      updateVariantDetails();
+      document.getElementById("SelectedColor").textContent = btn.dataset.optionValue;
+
+      updateVariant();
     });
   });
 
+  // Size click
   document.querySelectorAll(".size-pill").forEach(btn => {
     btn.addEventListener("click", () => {
-      const idx = parseInt(btn.dataset.optionIndex);
-      const val = btn.dataset.optionValue;
+      selectedOptions[1] = btn.dataset.optionValue;
 
-      selectedOptions[idx] = val;
       document.querySelectorAll(".size-pill").forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
 
-      document.getElementById("SelectedSize").textContent = val;
-      updateVariantDetails();
+      document.getElementById("SelectedSize").textContent = btn.dataset.optionValue;
+
+      updateVariant();
     });
   });
 
-  buyNowBtn.addEventListener("click", () => {
-    window.location.href = `/cart/${currentVariant.id}:1?checkout=true`;
+  // Close gallery
+  document.getElementById("ImageGalleryClose").addEventListener("click", () => {
+    galleryModal.classList.remove("is-open");
   });
 
-  galleryClose.addEventListener("click", () => galleryModal.classList.remove("is-open"));
-  galleryBackdrop.addEventListener("click", () => galleryModal.classList.remove("is-open"));
+  document.querySelector(".image-gallery-backdrop").addEventListener("click", () => {
+    galleryModal.classList.remove("is-open");
+  });
 
-  if (sizeBtn) sizeBtn.addEventListener("click", () => sizeModal.classList.add("is-open"));
-  if (sizeClose) sizeClose.addEventListener("click", () => sizeModal.classList.remove("is-open"));
-  if (sizeBackdrop) sizeBackdrop.addEventListener("click", () => sizeModal.classList.remove("is-open"));
+  // Size chart
+  document.getElementById("SizeChartButton").addEventListener("click", () => {
+    document.getElementById("SizeChartModal").classList.add("is-open");
+  });
 
-  updateVariantDetails();
+  document.getElementById("SizeChartClose").addEventListener("click", () => {
+    document.getElementById("SizeChartModal").classList.remove("is-open");
+  });
+
+  document.querySelector(".size-chart-backdrop").addEventListener("click", () => {
+    document.getElementById("SizeChartModal").classList.remove("is-open");
+  });
+
+  updateVariant();
 });
 </script>
