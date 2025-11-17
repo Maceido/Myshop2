@@ -6,6 +6,46 @@
   {{ 'theme.css' | asset_url | stylesheet_tag }}
   {{ content_for_header }}
 </head>
+<header class="top-nav">
+  <div class="nav-left">
+    <a class="nav-logo" href="{{ routes.root_url }}">
+      Gents
+    </a>
+
+    {% if customer and customer.default_address %}
+      <button class="nav-location">
+        Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
+      </button>
+    {% else %}
+      <button class="nav-location">
+        Set delivery location
+      </button>
+    {% endif %}
+  </div>
+
+  <div class="nav-center">
+    <form action="/search" method="get" class="nav-search">
+      <input type="search" name="q" placeholder="Search products">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+
+  <div class="nav-right">
+    <div class="nav-lang">
+      <select name="lang">
+        <option value="en" selected>EN</option>
+        <option value="es">ES</option>
+      </select>
+    </div>
+
+    <a href="/account" class="nav-orders">Orders</a>
+    <a href="/account" class="nav-account">My Account</a>
+
+    <a href="{{ routes.cart_url }}" class="nav-cart">
+      Cart ({{ cart.item_count }})
+    </a>
+  </div>
+</header>
 <body>
   <div class="layout">
     <aside class="sidebar">

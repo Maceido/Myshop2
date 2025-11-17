@@ -1,17 +1,25 @@
-<ul>
-  <li><a href="/collections/clothing-shoes-jewelry-watches">Clothing, Shoes, Jewelry &amp; Watches</a></li>
-  <li><a href="/collections/books-media">Books &amp; Media</a></li>
-  <li><a href="/collections/movies-music-games">Movies, Music &amp; Games</a></li>
-  <li><a href="/collections/electronics">Electronics</a></li>
-  <li><a href="/collections/computers-office">Computers &amp; Office</a></li>
-  <li><a href="/collections/smart-home">Smart Home</a></li>
-  <li><a href="/collections/home-garden-tools">Home, Garden &amp; Tools</a></li>
-  <li><a href="/collections/pet-supplies">Pet Supplies</a></li>
-  <li><a href="/collections/food-grocery">Food &amp; Grocery</a></li>
-  <li><a href="/collections/beauty-health">Beauty &amp; Health</a></li>
-  <li><a href="/collections/toys-kids-baby">Toys, Kids &amp; Baby</a></li>
-  <li><a href="/collections/handmade-crafts">Handmade &amp; Crafts</a></li>
-  <li><a href="/collections/sports-outdoors">Sports &amp; Outdoors</a></li>
-  <li><a href="/collections/automotive">Automotive</a></li>
-  <li><a href="/collections/industrial-scientific">Industrial &amp; Scientific</a></li>
+<ul class="sidebar-root">
+  <li class="cat">
+    <button class="cat-toggle">Clothing, Shoes, Jewelry & Watches</button>
+    <ul class="sub">
+      <li><a href="/collections/amazon-fashion">Amazon Fashion</a></li>
+      <li><a href="/collections/women">Women</a></li>
+      <li><a href="/collections/men">Men</a></li>
+      <li><a href="/collections/girls">Girls</a></li>
+      <li><a href="/collections/boys">Boys</a></li>
+      <li><a href="/collections/baby">Baby</a></li>
+      <li><a href="/collections/luggage">Luggage</a></li>
+      <li><a href="/collections/luxury">Amazon Luxury</a></li>
+      <li><a href="/collections/deals">Sales & Deals</a></li>
+    </ul>
+  </li>
 </ul>
+
+<script>
+document.querySelectorAll('.cat-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.parentElement.classList.toggle('open');
+  });
+});
+</script>
+

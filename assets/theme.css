@@ -249,3 +249,65 @@ body {
     grid-template-columns: 1fr;
   }
 }
+.top-nav {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 300px 1fr 300px;
+  align-items: center;
+  padding: 12px 20px;
+  gap: 20px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav-logo {
+  font-weight: 700;
+  font-size: 24px;
+  text-decoration: none;
+  color: #222;
+}
+
+.nav-location {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #f97316;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-search {
+  display: flex;
+}
+
+.nav-search input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px 0 0 6px;
+  border: 1px solid #e2e2e2;
+}
+
+.nav-search button {
+  padding: 10px 16px;
+  background: #f97316;
+  color: white;
+  border: 1px solid #f97316;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+}
+
+.nav-right a {
+  margin-left: 16px;
+  font-size: 14px;
+  color: #444;
+  text-decoration: none;
+}
+
+.nav-right select {
+  padding: 6px;
+  border-radius: 4px;
+}
+
