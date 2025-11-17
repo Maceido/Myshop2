@@ -6,28 +6,30 @@
   <!-- LEFT COLUMN: GALLERY -->
   <div class="product-gallery">
 
-    <!-- SIDE THUMBNAILS (INITIAL: JUST FIRST FEW MEDIA, JS WILL REPLACE PER VARIANT) -->
+    <!-- SIDE THUMBNAILS (WILL BE REPLACED BY JS) -->
     <div class="product-gallery-side" id="SideThumbs">
       {%- assign max_thumbs = 5 -%}
-      {%- for media in product.media -%}
+
+      {%- assign initial_media = product.media | where: "variant_ids", initial_variant.id -%}
+      {%- if initial_media.size == 0 -%}
+        {%- assign initial_media = product.media -%}
+      {%- endif -%}
+
+      {%- for media in initial_media -%}
         {%- if forloop.index0 < max_thumbs -%}
-          <button
-            type="button"
+          <button 
+            type="button" 
             class="product-thumb{% if forloop.first %} is-active{% endif %}"
             data-media-src="{{ media | image_url: width: 1200 }}"
           >
-            <img src="{{ media | image_url: width: 120 }}" alt="">
+            <img src="{{ media | image_url: width: 120 }}">
           </button>
         {%- endif -%}
       {%- endfor -%}
 
-      {%- if product.media.size > max_thumbs -%}
-        <button
-          type="button"
-          class="product-thumb product-thumb-more"
-          data-more="true"
-        >
-          +{{ product.media.size | minus: max_thumbs }}
+      {%- if initial_media.size > max_thumbs -%}
+        <button type="button" class="product-thumb product-thumb-more">
+          +{{ initial_media.size | minus: max_thumbs }}
         </button>
       {%- endif -%}
     </div>
@@ -35,49 +37,47 @@
     <!-- MAIN IMAGE -->
     <div class="product-gallery-main">
       {%- assign main_media = initial_variant.featured_media | default: product.media.first -%}
-      {%- if main_media -%}
-        <img
-          id="MainImage"
-          class="product-main-image"
-          src="{{ main_media | image_url: width: 1200 }}"
-          alt="{{ product.title }}"
-        >
-      {%- endif -%}
+      <img 
+        id="MainImage"
+        class="product-main-image"
+        src="{{ main_media | image_url: width: 1200 }}"
+        alt="{{ product.title }}"
+      >
     </div>
 
-  </div> <!-- END LEFT COLUMN -->
+  </div> <!-- END GALLERY -->
 
 
 
-  <!-- MIDDLE COLUMN: TITLE / OPTIONS / DETAILS -->
+  <!-- MIDDLE COLUMN -->
   <div class="product-main-info">
 
     <h1 class="product-title">{{ product.title }}</h1>
 
-    <div class="product-rating-placeholder">
-      ★★★★☆ <span>Rating coming soon</span>
-    </div>
+    <div class="product-rating-placeholder">★★★★☆ <span>Rating coming soon</span></div>
 
     <div class="product-price-main" id="PriceMain">
       {{ initial_variant.price | money }}
     </div>
 
     {%- assign option_count = product.options_with_values.size -%}
+
     <div class="product-selector">
 
-      {%- comment -%} COLOR OPTION (assume option1) {%- endcomment -%}
+      <!-- COLOR OPTION -->
       {%- if option_count >= 1 -%}
         {%- assign color_opt = product.options_with_values[0] -%}
+
         <div class="selector-block">
           <div class="selector-label-row">
             <div class="selector-label">
-              Color:
-              <span id="SelectedColor">{{ color_opt.selected_value }}</span>
+              Color: <span id="SelectedColor">{{ color_opt.selected_value }}</span>
             </div>
           </div>
 
           <div class="color-swatch-grid">
             {%- for value in color_opt.values -%}
+
               {%- assign swatch_img = blank -%}
               {%- for v in product.variants -%}
                 {%- if v.option1 == value and v.featured_media -%}
@@ -86,45 +86,41 @@
                 {%- endif -%}
               {%- endfor -%}
 
-              <button
+              <button 
                 type="button"
                 class="color-swatch{% if color_opt.selected_value == value %} is-active{% endif %}"
                 data-option-index="0"
                 data-option-value="{{ value }}"
               >
                 {%- if swatch_img -%}
-                  <img src="{{ swatch_img | img_url: '120x' }}" alt="{{ value }}">
+                  <img src="{{ swatch_img | img_url: '120x' }}">
                 {%- endif -%}
-                <span class="color-swatch-name">{{ value }}</span>
+                <span>{{ value }}</span>
               </button>
+
             {%- endfor -%}
           </div>
         </div>
       {%- endif -%}
 
 
-      {%- comment -%} SIZE OPTION (option2 if exists) {%- endcomment -%}
+
+      <!-- SIZE OPTION -->
       {%- if option_count >= 2 -%}
         {%- assign size_opt = product.options_with_values[1] -%}
-      {%- else -%}
-        {%- assign size_opt = blank -%}
-      {%- endif -%}
 
-      {%- if size_opt -%}
         <div class="selector-block">
           <div class="selector-label-row">
             <div class="selector-label">
-              Size:
-              <span id="SelectedSize">{{ size_opt.selected_value }}</span>
+              Size: <span id="SelectedSize">{{ size_opt.selected_value }}</span>
             </div>
-            <button type="button" class="size-chart-link" id="SizeChartButton">
-              Size chart
-            </button>
+
+            <button type="button" class="size-chart-link" id="SizeChartButton">Size chart</button>
           </div>
 
           <div class="size-pill-grid">
             {%- for value in size_opt.values -%}
-              <button
+              <button 
                 type="button"
                 class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
                 data-option-index="1"
@@ -135,20 +131,21 @@
             {%- endfor -%}
           </div>
         </div>
+
       {%- endif -%}
 
     </div>
 
 
-    <!-- PRODUCT DETAILS (NO IMAGES) -->
+
+    <!-- PRODUCT DETAILS -->
     <div class="product-details-section">
       <h3>Product details</h3>
       <div class="product-details-content">
-        {{ product.description
-          | replace: '<img', '<!--img'
+        {{ product.description 
+          | replace: '<img', '<!--img' 
           | replace: 'src=', 'Xsrc='
-          | strip_html
-        }}
+          | strip_html }}
       </div>
     </div>
 
@@ -157,11 +154,11 @@
       <p>{{ product.title }} with multiple styles and sizes available.</p>
     </div>
 
-  </div> <!-- END MIDDLE -->
+  </div>
 
 
 
-  <!-- RIGHT COLUMN: BUY BOX -->
+  <!-- RIGHT COLUMN -->
   <div class="product-buy-box">
 
     <div class="buy-box-price" id="BuyBoxPrice">
@@ -171,104 +168,58 @@
     <div class="buy-box-delivery">
       Delivery shown at checkout
       <div class="buy-box-location">
-        {%- if customer and customer.default_address -%}
+        {% if customer and customer.default_address %}
           Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
-        {%- else -%}
+        {% else %}
           Set your delivery location above
-        {%- endif -%}
+        {% endif %}
       </div>
     </div>
 
     <div id="StockBox" class="buy-box-stock">
-      {%- if initial_variant.available -%}
-        In stock
-      {%- else -%}
-        Out of stock
-      {%- endif -%}
+      {% if initial_variant.available %}In stock{% else %}Out of stock{% endif %}
     </div>
 
     {% form 'product', product, id: 'ProductForm' %}
-      <input
-        type="hidden"
-        name="id"
-        id="VariantIdInput"
-        value="{{ initial_variant.id }}"
-      >
+      <input type="hidden" name="id" id="VariantIdInput" value="{{ initial_variant.id }}">
 
       <div class="buy-box-quantity">
-        <label for="QtySelect">Quantity:</label>
+        <label>Quantity:</label>
         <select id="QtySelect" name="quantity"></select>
       </div>
 
       <div class="buy-box-actions">
         <button class="btn btn-primary" type="submit">Add to Cart</button>
-        <button class="btn btn-outline" id="BuyNowBtn" type="button">
-          Buy Now
-        </button>
+        <button class="btn btn-outline" id="BuyNowBtn" type="button">Buy Now</button>
       </div>
-    {% endform %}
 
+    {% endform %}
   </div>
 
 </section>
 
 
 
-<!-- FULLSCREEN IMAGE GALLERY -->
+<!-- FULLSCREEN GALLERY -->
 <div class="image-gallery-modal" id="ImageGalleryModal">
   <div class="image-gallery-backdrop"></div>
-
   <div class="image-gallery-content">
     <button id="ImageGalleryClose" class="image-gallery-close">×</button>
-
-    <div class="image-gallery-carousel" id="ImageGalleryCarousel">
-      {%- comment -%}
-        JS will overwrite this with the current variant's images.
-      {%- endcomment -%}
-      {%- for media in product.media -%}
-        <img src="{{ media | image_url: width: 1600 }}" class="gallery-big-image">
-      {%- endfor -%}
-    </div>
+    <div class="image-gallery-carousel" id="ImageGalleryCarousel"></div>
   </div>
 </div>
 
-
-
-<!-- SIZE CHART MODAL -->
+<!-- SIZE CHART -->
 <div class="size-chart-modal" id="SizeChartModal">
   <div class="size-chart-backdrop"></div>
   <div class="size-chart-content">
     <button id="SizeChartClose" class="size-chart-close">×</button>
     <h3>Size Chart</h3>
-
     <div class="size-chart-grid">
-      <table>
-        <thead>
-          <tr>
-            <th>Size</th>
-            <th>Chest (in)</th>
-            <th>Chest (cm)</th>
-            <th>Length (in)</th>
-            <th>Length (cm)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {%- assign chart = product.metafields.specs.size_chart -%}
-          {%- if chart -%}
-            {{ chart | metafield_text }}
-          {%- else -%}
-            <tr><td>S</td><td>34–36</td><td>86–91</td><td>26</td><td>66</td></tr>
-            <tr><td>M</td><td>38–40</td><td>96–102</td><td>27</td><td>68.5</td></tr>
-            <tr><td>L</td><td>42–44</td><td>107–112</td><td>28</td><td>71</td></tr>
-            <tr><td>XL</td><td>46–48</td><td>117–122</td><td>29</td><td>73.5</td></tr>
-            <tr><td>XXL</td><td>50–52</td><td>127–132</td><td>30</td><td>76</td></tr>
-          {%- endif -%}
-        </tbody>
-      </table>
+      {{ product.metafields.specs.size_chart | metafield_text }}
     </div>
   </div>
 </div>
-
 
 
 <!-- JAVASCRIPT -->
@@ -279,14 +230,24 @@ document.addEventListener("DOMContentLoaded", function() {
   let currentVariant = product.selected_or_first_available_variant || product.variants[0];
   let selectedOptions = currentVariant.options.slice();
 
-  const mainImg         = document.getElementById("MainImage");
+  const mainImg = document.getElementById("MainImage");
   const thumbsContainer = document.getElementById("SideThumbs");
-  const priceMain       = document.getElementById("PriceMain");
-  const priceBox        = document.getElementById("BuyBoxPrice");
-  const stockBox        = document.getElementById("StockBox");
-  const qtySelect       = document.getElementById("QtySelect");
-  const variantIdInput  = document.getElementById("VariantIdInput");
-  const buyNowBtn       = document.getElementById("BuyNowBtn");
+  const priceMain = document.getElementById("PriceMain");
+  const priceBox = document.getElementById("BuyBoxPrice");
+  const stockBox = document.getElementById("StockBox");
+  const qtySelect = document.getElementById("QtySelect");
+  const variantIdInput = document.getElementById("VariantIdInput");
+  const buyNowBtn = document.getElementById("BuyNowBtn");
+
+  const galleryModal = document.getElementById("ImageGalleryModal");
+  const galleryCarousel = document.getElementById("ImageGalleryCarousel");
+  const galleryClose = document.getElementById("ImageGalleryClose");
+  const galleryBackdrop = document.querySelector(".image-gallery-backdrop");
+
+  const sizeModal = document.getElementById("SizeChartModal");
+  const sizeBtn = document.getElementById("SizeChartButton");
+  const sizeClose = document.getElementById("SizeChartClose");
+  const sizeBackdrop = document.querySelector(".size-chart-backdrop");
 
   function clean(url) {
     return url ? url.split("?")[0] : "";
@@ -305,37 +266,47 @@ document.addEventListener("DOMContentLoaded", function() {
     ) || product.variants[0];
   }
 
-  // ⭐ THIS IS THE ZERO-BULLSHIT VERSION
-  // Always use:
-  // 1. variant.featured_media (main image)
-  // 2. other media also assigned to variant.variant_ids
-  // No guessing, no matching by name.
+  /* COLLECT IMAGES FOR CURRENT VARIANT */
   function getMediaForVariant(variant) {
-    let media = [];
+    const colorName = (variant.options[0] || "").toLowerCase().trim();
+    const firstWord = colorName.split(" ")[0];
 
-    // Include featured media FIRST
+    let mediaSet = [];
+
     if (variant.featured_media) {
-      media.push({
-        src: clean(variant.featured_media.preview_image.src)
-      });
+      mediaSet.push({ src: clean(variant.featured_media.preview_image.src) });
     }
 
-    // Then include any variant-assigned media
     product.media.forEach(m => {
       if (Array.isArray(m.variant_ids) && m.variant_ids.includes(variant.id)) {
-        const cleanSrc = clean(m.src);
-        if (!media.some(x => x.src === cleanSrc)) {
-          media.push({ src: cleanSrc });
-        }
+        const fixed = clean(m.src);
+        if (!mediaSet.some(x => x.src === fixed)) mediaSet.push({ src: fixed });
       }
     });
 
-    // If NOTHING assigned, fallback to all product media
-    if (media.length === 0) {
-      media = product.media.map(m => ({ src: clean(m.src) }));
+    product.media.forEach(m => {
+      const src = clean(m.src).toLowerCase();
+      const alt = (m.alt || "").toLowerCase();
+      if (src.includes(colorName) || alt.includes(colorName)) {
+        const fixed = clean(m.src);
+        if (!mediaSet.some(x => x.src === fixed)) mediaSet.push({ src: fixed });
+      }
+    });
+
+    product.media.forEach(m => {
+      const src = clean(m.src).toLowerCase();
+      const alt = (m.alt || "").toLowerCase();
+      if (src.includes(firstWord) || alt.includes(firstWord)) {
+        const fixed = clean(m.src);
+        if (!mediaSet.some(x => x.src === fixed)) mediaSet.push({ src: fixed });
+      }
+    });
+
+    if (mediaSet.length === 0) {
+      mediaSet = product.media.map(m => ({ src: clean(m.src) }));
     }
 
-    return media;
+    return mediaSet;
   }
 
   function setMainImage(src) {
@@ -343,17 +314,32 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function attachThumbEvents() {
-    const buttons = thumbsContainer.querySelectorAll(".product-thumb:not(.product-thumb-more)");
+    const thumbs = thumbsContainer.querySelectorAll(".product-thumb:not(.product-thumb-more)");
 
-    buttons.forEach(btn => {
+    thumbs.forEach(btn => {
       btn.addEventListener("click", () => {
-        const src = btn.dataset.mediaSrc;
-        setMainImage(src);
-
-        buttons.forEach(x => x.classList.remove("is-active"));
+        setMainImage(btn.dataset.mediaSrc);
+        thumbs.forEach(x => x.classList.remove("is-active"));
         btn.classList.add("is-active");
       });
     });
+
+    const moreBtn = thumbsContainer.querySelector(".product-thumb-more");
+    if (moreBtn) {
+      moreBtn.addEventListener("click", () => {
+        const media = getMediaForVariant(currentVariant);
+
+        galleryCarousel.innerHTML = "";
+        media.forEach(m => {
+          const img = document.createElement("img");
+          img.src = clean(m.src);
+          img.className = "gallery-big-image";
+          galleryCarousel.appendChild(img);
+        });
+
+        galleryModal.classList.add("is-open");
+      });
+    }
   }
 
   function renderThumbsForVariant(variant) {
@@ -376,7 +362,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (media.length > max) {
       thumbsContainer.innerHTML += `
-        <button type="button" class="product-thumb product-thumb-more">
+        <button class="product-thumb product-thumb-more" data-more="true">
           +${media.length - max}
         </button>
       `;
@@ -386,10 +372,9 @@ document.addEventListener("DOMContentLoaded", function() {
     attachThumbEvents();
   }
 
-  function syncQuantity(variant) {
+  function syncQuantity(v) {
     qtySelect.innerHTML = "";
-
-    let max = variant.inventory_management ? variant.inventory_quantity : 50;
+    let max = v.inventory_management ? v.inventory_quantity : 50;
     if (max < 1) max = 1;
     if (max > 50) max = 50;
 
@@ -411,54 +396,48 @@ document.addEventListener("DOMContentLoaded", function() {
 
     syncQuantity(currentVariant);
 
-    // ⭐ KEY PART
     renderThumbsForVariant(currentVariant);
   }
 
-  // COLOR CLICK
   document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.addEventListener("click", () => {
       const idx = parseInt(btn.dataset.optionIndex);
       const val = btn.dataset.optionValue;
 
       selectedOptions[idx] = val;
-
       document.querySelectorAll(".color-swatch").forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
 
       document.getElementById("SelectedColor").textContent = val;
-
       updateVariantDetails();
     });
   });
 
-  // SIZE CLICK
   document.querySelectorAll(".size-pill").forEach(btn => {
     btn.addEventListener("click", () => {
       const idx = parseInt(btn.dataset.optionIndex);
       const val = btn.dataset.optionValue;
 
       selectedOptions[idx] = val;
-
       document.querySelectorAll(".size-pill").forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
 
       document.getElementById("SelectedSize").textContent = val;
-
       updateVariantDetails();
     });
   });
 
-  // BUY NOW
   buyNowBtn.addEventListener("click", () => {
     window.location.href = `/cart/${currentVariant.id}:1?checkout=true`;
   });
 
-  // INITIAL SETUP
-  updateVariantDetails();
+  galleryClose.addEventListener("click", () => galleryModal.classList.remove("is-open"));
+  galleryBackdrop.addEventListener("click", () => galleryModal.classList.remove("is-open"));
 
+  if (sizeBtn) sizeBtn.addEventListener("click", () => sizeModal.classList.add("is-open"));
+  if (sizeClose) sizeClose.addEventListener("click", () => sizeModal.classList.remove("is-open"));
+  if (sizeBackdrop) sizeBackdrop.addEventListener("click", () => sizeModal.classList.remove("is-open"));
+
+  updateVariantDetails();
 });
 </script>
-
-
-
