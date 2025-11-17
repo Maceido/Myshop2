@@ -1,6 +1,6 @@
 <section class="product-page">
 
-  <!-- LEFT: Gallery with only side thumbnails -->
+  <!-- LEFT: GALLERY -->
   <div class="product-gallery">
 
     {% assign total_media = product.media.size %}
@@ -14,16 +14,12 @@
             <button
               type="button"
               class="product-thumb{% if forloop.first %} is-active{% endif %}"
-              data-media-src="{{ media | image_url: width: 800 }}"
+              data-media-src="{{ media.src }}"
             >
-              <img src="{{ media | image_url: width: 120 }}" alt="{{ product.title | escape }}" />
+              <img src="{{ media | image_url: width: 120 }}" alt="{{ product.title | escape }}">
             </button>
           {% elsif forloop.index0 == max_thumbs %}
-            <button
-              type="button"
-              class="product-thumb product-thumb-more"
-              data-more="true"
-            >
+            <button type="button" class="product-thumb product-thumb-more" data-more="true">
               +{{ total_media | minus: max_thumbs }}
             </button>
             {% break %}
@@ -35,30 +31,20 @@
     <!-- MAIN IMAGE -->
     <div class="product-gallery-main">
       <div class="product-main-image-wrapper">
-        {% if product.media.size > 0 %}
-          {% assign first = product.media.first %}
-          <img
-            id="MainImage"
-            class="product-main-image"
-            src="{{ first | image_url: width: 800 }}"
-            alt="{{ product.title | escape }}"
-          >
-        {% elsif product.featured_image %}
-          <img
-            id="MainImage"
-            class="product-main-image"
-            src="{{ product.featured_image | img_url: '800x' }}"
-            alt="{{ product.title | escape }}"
-          >
-        {% endif %}
+        {% assign first = product.media.first %}
+        <img
+          id="MainImage"
+          class="product-main-image"
+          src="{{ first.src }}"
+          alt="{{ product.title | escape }}"
+        >
       </div>
     </div>
 
-  </div> <!-- END LEFT COLUMN -->
+  </div>
 
 
-
-  <!-- MIDDLE COLUMN -->
+  <!-- MIDDLE SECTION -->
   <div class="product-main-info">
 
     <h1 class="product-title">{{ product.title }}</h1>
@@ -75,25 +61,19 @@
 
     <div class="product-selector">
 
-      {%- comment -%}
-        COLOR SECTION - first option treated as color
-        We keep label as "Color" to avoid Element 1, Option 2 nonsense.
-      {%- endcomment -%}
+      <!-- COLOR -->
       {% if option_count >= 1 %}
         {% assign color_opt = product.options_with_values[0] %}
-
         <div class="selector-block">
           <div class="selector-label-row">
             <div class="selector-label">
-              Color:
-              <span id="SelectedColor">{{ color_opt.selected_value }}</span>
+              Color: <span id="SelectedColor">{{ color_opt.selected_value }}</span>
             </div>
           </div>
 
           <div class="color-swatch-grid">
             {% for value in color_opt.values %}
               {% assign varimg = blank %}
-
               {% for v in product.variants %}
                 {% if v.option1 == value and v.featured_media %}
                   {% assign varimg = v.featured_media.preview_image.src %}
@@ -105,11 +85,11 @@
                 type="button"
                 class="color-swatch{% if color_opt.selected_value == value %} is-active{% endif %}"
                 data-option-index="0"
-                data-option-value="{{ value | escape }}"
+                data-option-value="{{ value }}"
                 {% if varimg %}data-media-src="{{ varimg }}"{% endif %}
               >
                 {% if varimg %}
-                  <img src="{{ varimg | img_url: '120x' }}" alt="{{ value | escape }}" />
+                  <img src="{{ varimg | img_url: '120x' }}">
                 {% endif %}
                 <span class="color-swatch-name">{{ value }}</span>
               </button>
@@ -118,27 +98,16 @@
         </div>
       {% endif %}
 
-
-
-      {%- comment -%}
-        SIZE SECTION - second option as size if it exists
-      {%- endcomment -%}
-      {% assign size_opt = blank %}
-
+      <!-- SIZE -->
       {% if option_count >= 2 %}
         {% assign size_opt = product.options_with_values[1] %}
-      {% endif %}
 
-      {% if size_opt %}
         <div class="selector-block">
           <div class="selector-label-row">
             <div class="selector-label">
-              Size:
-              <span id="SelectedSize">{{ size_opt.selected_value }}</span>
+              Size: <span id="SelectedSize">{{ size_opt.selected_value }}</span>
             </div>
-            <button type="button" class="size-chart-link" id="SizeChartButton">
-              Size chart
-            </button>
+            <button type="button" class="size-chart-link" id="SizeChartButton">Size chart</button>
           </div>
 
           <div class="size-pill-grid">
@@ -147,7 +116,7 @@
                 type="button"
                 class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
                 data-option-index="1"
-                data-option-value="{{ value | escape }}"
+                data-option-value="{{ value }}"
               >
                 {{ value }}
               </button>
@@ -158,9 +127,7 @@
 
     </div>
 
-
-
-    <!-- PRODUCT DETAILS, TEXT ONLY, NO IMAGES -->
+    <!-- PRODUCT DETAILS - TEXT ONLY -->
     <div class="product-details-section">
       <h3>Product details</h3>
       <div class="product-details-content">
@@ -173,33 +140,21 @@
       <p>{{ product.title }} with multiple styles and sizes available.</p>
     </div>
 
-  </div> <!-- END MIDDLE COLUMN -->
+  </div>
 
 
 
-  <!-- RIGHT: BUY BOX -->
+  <!-- BUY BOX -->
   <div class="product-buy-box">
 
+    {% assign v = product.selected_or_first_available_variant %}
+
     <div class="buy-box-price" id="BuyBoxPrice">
-      {{ product.selected_or_first_available_variant.price | money }}
+      {{ v.price | money }}
     </div>
 
     <div class="buy-box-delivery">
-      {% if product.metafields.shipping.estimated_min_days or product.metafields.shipping.estimated_max_days %}
-        <div
-          id="BuyBoxDeliveryDate"
-          data-min-days="{{ product.metafields.shipping.estimated_min_days }}"
-          data-max-days="{{ product.metafields.shipping.estimated_max_days }}"
-        >
-          Estimated delivery:
-          <span class="delivery-date-value"></span>
-        </div>
-      {% else %}
-        <div class="buy-box-delivery-note">
-          Delivery time shown at checkout
-        </div>
-      {% endif %}
-
+      Delivery time shown at checkout
       <div class="buy-box-location">
         {% if customer and customer.default_address %}
           Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
@@ -209,21 +164,9 @@
       </div>
     </div>
 
-    {% assign v = product.selected_or_first_available_variant %}
+    <div class="buy-box-stock" id="StockBox">Loading stock…</div>
 
-    <div class="buy-box-stock" id="StockBox">
-      {% if v.inventory_management == 'shopify' %}
-        {% if v.inventory_quantity > 0 %}
-          In stock
-        {% else %}
-          Out of stock
-        {% endif %}
-      {% else %}
-        In stock
-      {% endif %}
-    </div>
-
-    {% form 'product', product, id: 'ProductForm' %}
+    {% form 'product', product, id:"ProductForm" %}
       <input type="hidden" name="id" value="{{ v.id }}">
 
       <div class="buy-box-quantity">
@@ -232,40 +175,12 @@
       </div>
 
       <div class="buy-box-actions">
-        <button class="btn btn-primary" type="submit">
-          Add to Cart
-        </button>
-        <button
-          class="btn btn-outline"
-          type="button"
-          id="BuyNowBtn"
-          {% unless product.available %}disabled{% endunless %}
-        >
-          Buy Now
-        </button>
+        <button class="btn btn-primary" type="submit">Add to Cart</button>
+        <button class="btn btn-outline" type="button" id="BuyNowBtn">Buy Now</button>
       </div>
-
     {% endform %}
 
-    <div class="buy-box-meta">
-      {% if product.metafields.shipping.ships_from %}
-        <div><strong>Ships from</strong> {{ product.metafields.shipping.ships_from }}</div>
-      {% endif %}
-
-      {% if product.metafields.shipping.seller_name %}
-        <div><strong>Sold by</strong> {{ product.metafields.shipping.seller_name }}</div>
-      {% endif %}
-
-      {% if product.metafields.policies.returns_label %}
-        <div><strong>Returns</strong> {{ product.metafields.policies.returns_label }}</div>
-      {% endif %}
-
-      {% if product.metafields.policies.payment_label %}
-        <div><strong>Payment</strong> {{ product.metafields.policies.payment_label }}</div>
-      {% endif %}
-    </div>
-
-  </div> <!-- END BUY BOX -->
+  </div>
 
 </section>
 
@@ -277,273 +192,120 @@
   <div class="size-chart-content">
     <button class="size-chart-close" id="SizeChartClose">×</button>
     <h3>Size Chart</h3>
-    <img src="{{ 'size-chart.png' | asset_url }}" alt="Size chart" />
+    <img src="{{ 'size-chart.png' | asset_url }}">
   </div>
 </div>
 
-<!-- IMAGE GALLERY MODAL FOR 5+ IMAGES -->
+<!-- IMAGE GALLERY MODAL -->
 <div class="image-gallery-modal" id="ImageGalleryModal">
   <div class="image-gallery-backdrop"></div>
 
   <div class="image-gallery-content">
     <button class="image-gallery-close" id="ImageGalleryClose">×</button>
 
+    <h2 class="image-gallery-title">{{ product.title }}</h2>
+
+    <div class="image-gallery-main">
+      <img id="GalleryMainImage" src="{{ product.media.first.src }}">
+    </div>
+
     <div class="image-gallery-grid">
       {% for media in product.media %}
-        <img src="{{ media | image_url: width: 800 }}" class="image-gallery-item" alt="{{ product.title | escape }}">
+        <img
+          src="{{ media | image_url: width: 200 }}"
+          class="image-gallery-item"
+          data-full="{{ media.src }}"
+        >
       {% endfor %}
     </div>
   </div>
 </div>
 
 
-
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  var productData = {{ product | json }};
-  if (!productData || !productData.variants || !productData.variants.length) return;
+document.addEventListener("DOMContentLoaded", () => {
+  const data = {{ product | json }};
+  let variant = data.selected_or_first_available_variant;
+  let selected = variant.options.slice();
 
-  var initialVariantId = {{ product.selected_or_first_available_variant.id }};
-  var initialVariant = productData.variants.find(function(v) { return v.id === initialVariantId; }) || productData.variants[0];
+  const mainImg = document.getElementById("MainImage");
+  const thumbs = document.querySelectorAll("#SideThumbs .product-thumb:not(.product-thumb-more)");
+  const colorBtns = document.querySelectorAll(".color-swatch");
+  const sizeBtns = document.querySelectorAll(".size-pill");
 
-  var selectedOptions = initialVariant.options.slice();
+  const stockEl = document.getElementById("StockBox");
+  const qtySelect = document.getElementById("QtySelect");
+  const priceMain = document.getElementById("PriceMain");
+  const priceBox = document.getElementById("BuyBoxPrice");
 
-  var mainImg = document.getElementById("MainImage");
-  var thumbs = document.querySelectorAll("#SideThumbs .product-thumb:not(.product-thumb-more)");
-  var moreBtn = document.querySelector(".product-thumb-more");
+  const productForm = document.getElementById("ProductForm");
+  const idInput = productForm.querySelector("input[name='id']");
 
-  var colorButtons = document.querySelectorAll(".color-swatch");
-  var sizeButtons = document.querySelectorAll(".size-pill");
-
-  var priceMainEl = document.getElementById("PriceMain");
-  var priceBoxEl = document.getElementById("BuyBoxPrice");
-  var stockBoxEl = document.getElementById("StockBox");
-  var qtySelect = document.getElementById("QtySelect");
-  var buyNowBtn = document.getElementById("BuyNowBtn");
-  var selectedColorText = document.getElementById("SelectedColor");
-  var selectedSizeText = document.getElementById("SelectedSize");
-  var productForm = document.getElementById("ProductForm");
-  var variantIdInput = productForm ? productForm.querySelector('input[name="id"]') : null;
-
-  function setActiveImage(newSrc) {
-    if (!mainImg || !newSrc) return;
-
-    mainImg.src = newSrc;
-    mainImg.removeAttribute("srcset");
-    mainImg.removeAttribute("sizes");
-
-    thumbs.forEach(function(btn) {
-      btn.classList.toggle("is-active", btn.dataset.mediaSrc === newSrc);
-    });
-  }
-
-  function syncQuantitySelect(variant) {
-    if (!qtySelect) return;
-
-    var maxQty = 50;
-
-    if (variant && variant.inventory_management === "shopify" && typeof variant.inventory_quantity === "number") {
-      maxQty = variant.inventory_quantity;
-      if (maxQty < 1) maxQty = 1;
-      if (maxQty > 50) maxQty = 50;
-    }
-
-    var current = parseInt(qtySelect.value || "1", 10);
-    qtySelect.innerHTML = "";
-
-    for (var i = 1; i <= maxQty; i++) {
-      var opt = document.createElement("option");
-      opt.value = i;
-      opt.textContent = i;
-      if (i === current) opt.selected = true;
-      qtySelect.appendChild(opt);
-    }
+  function swap(src) {
+    mainImg.src = src;
   }
 
   function findVariant() {
-    if (!selectedOptions || !selectedOptions.length) return initialVariant;
-
-    var found = productData.variants.find(function(v) {
-      return JSON.stringify(v.options) === JSON.stringify(selectedOptions);
-    });
-
-    return found || initialVariant;
+    return data.variants.find(v => JSON.stringify(v.options) === JSON.stringify(selected)) || data.variants[0];
   }
 
   function updateVariant() {
-    var variant = findVariant();
-    if (!variant) return;
+    variant = findVariant();
+    idInput.value = variant.id;
 
-    if (variantIdInput) {
-      variantIdInput.value = variant.id;
-    }
+    priceMain.textContent = Shopify.formatMoney(variant.price, "{{ shop.money_format }}");
+    priceBox.textContent = Shopify.formatMoney(variant.price, "{{ shop.money_format }}");
 
-    if (priceMainEl) {
-      priceMainEl.textContent = Shopify.formatMoney(
-        variant.price,
-        "{{ shop.money_format | escape }}"
-      );
-    }
-
-    if (priceBoxEl) {
-      priceBoxEl.textContent = Shopify.formatMoney(
-        variant.price,
-        "{{ shop.money_format | escape }}"
-      );
-    }
-
-    if (stockBoxEl) {
-      if (variant.inventory_management === "shopify") {
-        if (variant.inventory_quantity > 0) {
-          stockBoxEl.textContent = "In stock";
-          stockBoxEl.style.color = "#16a34a";
-        } else {
-          stockBoxEl.textContent = "Out of stock";
-          stockBoxEl.style.color = "#dc2626";
-        }
+    if (variant.inventory_management === "shopify") {
+      if (variant.inventory_quantity > 0) {
+        stockEl.textContent = "In stock";
+        stockEl.style.color = "#16a34a";
       } else {
-        stockBoxEl.textContent = "In stock";
-        stockBoxEl.style.color = "#16a34a";
+        stockEl.textContent = "Out of stock";
+        stockEl.style.color = "#dc2626";
       }
+    } else {
+      stockEl.textContent = "In stock";
     }
 
-    if (buyNowBtn) {
-      buyNowBtn.disabled = !variant.available;
-      buyNowBtn.dataset.variantId = variant.id;
+    if (variant.featured_media) {
+      swap(variant.featured_media.preview_image.src);
     }
-
-    if (variant.featured_media && variant.featured_media.preview_image && variant.featured_media.preview_image.src) {
-      setActiveImage(variant.featured_media.preview_image.src);
-    } else if (selectedOptions.length && colorButtons.length) {
-      var currentColor = selectedOptions[0];
-      var colorBtn = Array.prototype.find.call(colorButtons, function(b) {
-        return b.dataset.optionValue === currentColor && b.dataset.mediaSrc;
-      });
-      if (colorBtn && colorBtn.dataset.mediaSrc) {
-        setActiveImage(colorBtn.dataset.mediaSrc);
-      }
-    }
-
-    syncQuantitySelect(variant);
   }
 
-  thumbs.forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      var src = btn.getAttribute("data-media-src");
-      setActiveImage(src);
+  thumbs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      swap(btn.dataset.mediaSrc);
     });
   });
 
-  colorButtons.forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      var idx = parseInt(btn.dataset.optionIndex, 10);
-      var val = btn.dataset.optionValue;
-
-      colorButtons.forEach(function(b) { b.classList.remove("is-active"); });
+  colorBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      colorBtns.forEach(b => b.classList.remove("is-active"));
       btn.classList.add("is-active");
 
-      if (selectedColorText) selectedColorText.textContent = val;
-      selectedOptions[idx] = val;
-
+      selected[0] = btn.dataset.optionValue;
       updateVariant();
     });
   });
 
-  sizeButtons.forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      var idx = parseInt(btn.dataset.optionIndex, 10);
-      var val = btn.dataset.optionValue;
-
-      sizeButtons.forEach(function(b) { b.classList.remove("is-active"); });
+  sizeBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      sizeBtns.forEach(b => b.classList.remove("is-active"));
       btn.classList.add("is-active");
 
-      if (selectedSizeText) selectedSizeText.textContent = val;
-      selectedOptions[idx] = val;
-
+      selected[1] = btn.dataset.optionValue;
       updateVariant();
     });
   });
 
-  if (buyNowBtn && qtySelect) {
-    buyNowBtn.addEventListener("click", function() {
-      var variantId = buyNowBtn.dataset.variantId || initialVariant.id;
-      var qty = qtySelect.value || 1;
-      if (!variantId) return;
-      window.location.href = "/cart/" + variantId + ":" + qty + "?checkout=true";
-    });
-  }
+  document.querySelector(".product-thumb-more")?.addEventListener("click", () => {
+    document.getElementById("ImageGalleryModal").classList.add("is-open");
+  });
 
-  var sizeChartBtn = document.getElementById("SizeChartButton");
-  var sizeChartModal = document.getElementById("SizeChartModal");
-  var sizeChartClose = document.getElementById("SizeChartClose");
-
-  if (sizeChartBtn && sizeChartModal) {
-    sizeChartBtn.addEventListener("click", function() {
-      sizeChartModal.classList.add("is-open");
-    });
-  }
-
-  if (sizeChartClose && sizeChartModal) {
-    sizeChartClose.addEventListener("click", function() {
-      sizeChartModal.classList.remove("is-open");
-    });
-  }
-
-  if (sizeChartModal) {
-    var backdrop = sizeChartModal.querySelector(".size-chart-backdrop");
-    if (backdrop) {
-      backdrop.addEventListener("click", function() {
-        sizeChartModal.classList.remove("is-open");
-      });
-    }
-  }
-
-  var galleryModal = document.getElementById("ImageGalleryModal");
-  var galleryClose = document.getElementById("ImageGalleryClose");
-  var galleryBackdrop = document.querySelector(".image-gallery-backdrop");
-
-  if (moreBtn && galleryModal) {
-    moreBtn.addEventListener("click", function() {
-      galleryModal.classList.add("is-open");
-    });
-  }
-
-  if (galleryClose && galleryModal) {
-    galleryClose.addEventListener("click", function() {
-      galleryModal.classList.remove("is-open");
-    });
-  }
-
-  if (galleryBackdrop && galleryModal) {
-    galleryBackdrop.addEventListener("click", function() {
-      galleryModal.classList.remove("is-open");
-    });
-  }
-
-  var deliveryEl = document.getElementById("BuyBoxDeliveryDate");
-  if (deliveryEl) {
-    var minDays = parseInt(deliveryEl.dataset.minDays || "0", 10);
-    var maxDays = parseInt(deliveryEl.dataset.maxDays || "0", 10);
-    var span = deliveryEl.querySelector(".delivery-date-value");
-    if (span && (minDays > 0 || maxDays > 0)) {
-      var now = new Date();
-      var options = { month: "long", day: "numeric" };
-
-      var minDate = minDays > 0 ? new Date(now.getTime() + minDays * 86400000) : null;
-      var maxDate = maxDays > 0 ? new Date(now.getTime() + maxDays * 86400000) : null;
-
-      if (minDate && maxDate) {
-        span.textContent =
-          minDate.toLocaleDateString("en-US", options) +
-          " - " +
-          maxDate.toLocaleDateString("en-US", options);
-      } else if (maxDate) {
-        span.textContent = maxDate.toLocaleDateString("en-US", options);
-      } else if (minDate) {
-        span.textContent = minDate.toLocaleDateString("en-US", options);
-      }
-    }
-  }
+  document.querySelector(".image-gallery-close").addEventListener("click", () => {
+    document.getElementById("ImageGalleryModal").classList.remove("is-open");
+  });
 
   updateVariant();
 });
