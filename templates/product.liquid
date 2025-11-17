@@ -184,112 +184,129 @@ document.addEventListener("DOMContentLoaded", function() {
 
   const product = {{ product | json }};
 
-  // HARDENED SAFE VARIANT PICKER
-  let currentVariant = product.selected_or_first_available_variant || product.variants?.[0] || {
-    id: null,
-    price: product.price || product.price_min || 0,
-    available: true,
-    options: []
-  };
+  /* ========= SAFE VARIANT SETUP ========= */
+  let currentVariant =
+    product.selected_or_first_available_variant ||
+    product.variants?.[0] ||
+    { id: null, price: 0, available: true, options: [] };
 
-  // ALWAYS ensure selectedOptions exists
   let selectedOptions = Array.isArray(currentVariant.options)
-    ? currentVariant.options.slice()
+    ? [...currentVariant.options]
     : [];
 
   const mainImg = document.getElementById("MainImage");
-  const thumbs = document.getElementById("SideThumbs");
-  const gallery = document.getElementById("ImageGalleryCarousel");
+
+  /* ========= GALLERY ELEMENTS ========= */
   const galleryModal = document.getElementById("ImageGalleryModal");
+  const galleryContent = document.getElementById("ImageGalleryCarousel");
   const galleryClose = document.getElementById("ImageGalleryClose");
   const galleryBackdrop = document.querySelector(".image-gallery-backdrop");
 
-  const sizeChart = document.getElementById("SizeChartModal");
-  const sizeChartBtn = document.getElementById("SizeChartButton");
-  const sizeChartClose = document.getElementById("SizeChartClose");
-  const sizeChartBackdrop = document.querySelector(".size-chart-backdrop");
+  /* ========= SIZE CHART ELEMENTS ========= */
+  const sizeModal = document.getElementById("SizeChartModal");
+  const sizeBtn = document.getElementById("SizeChartButton");
+  const sizeClose = document.getElementById("SizeChartClose");
+  const sizeBackdrop = document.querySelector(".size-chart-backdrop");
 
-  function clean(url){ return url ? url.split("?")[0] : ""; }
+  /* ========= CLEAN URL HELPER ========= */
+  function clean(url) {
+    return url ? url.split("?")[0] : "";
+  }
 
-  /* -------------------------------
-     THUMBNAILS
-  ------------------------------- */
-  function attachThumbClicks() {
+  /* ========= SIDE THUMBNAILS CLICK ========= */
+  function setupThumbnailClicks() {
     document.querySelectorAll(".product-thumb").forEach(btn => {
       if (btn.classList.contains("product-thumb-more")) {
-        btn.onclick = showAllImagesModal;
+        btn.onclick = openFullGallery;
         return;
       }
+
       btn.onclick = () => {
-        mainImg.src = clean(btn.dataset.mediaSrc);
-        document.querySelectorAll(".product-thumb").forEach(b => b.classList.remove("is-active"));
+        const src = btn.dataset.mediaSrc;
+        mainImg.src = clean(src);
+
+        document.querySelectorAll(".product-thumb")
+          .forEach(x => x.classList.remove("is-active"));
+
         btn.classList.add("is-active");
       };
     });
   }
 
-  /* -------------------------------
-     OPEN FULLSCREEN GALLERY
-  ------------------------------- */
-  function showAllImagesModal() {
-    if (!product.media) return;
+  setupThumbnailClicks();
 
-    gallery.innerHTML = "";
+  /* ========= FULLSCREEN GALLERY ========= */
+  function openFullGallery() {
+
+    galleryContent.innerHTML = "";
+
     product.media.forEach(m => {
       const img = document.createElement("img");
       img.src = clean(m.src);
       img.className = "gallery-big-image";
-      gallery.appendChild(img);
+      galleryContent.appendChild(img);
     });
 
     galleryModal.classList.add("is-open");
   }
 
-  attachThumbClicks();
+  if (galleryClose) galleryClose.onclick = () => galleryModal.classList.remove("is-open");
+  if (galleryBackdrop) galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
 
-  /* -------------------------------
-     COLOR SWITCHING (SAFE)
-  ------------------------------- */
+  /* ========= COLOR SWITCHING WITH VARIANT UPDATE ========= */
   document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.addEventListener("click", () => {
 
       const value = btn.dataset.optionValue;
 
-      // update UI
+      // UI update
       document.querySelectorAll(".color-swatch").forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
       document.getElementById("SelectedColor").textContent = value;
 
-      // find variant safely
-      if (product.variants && product.variants.length > 0) {
-        selectedOptions[0] = value;
+      selectedOptions[0] = value;
 
-        const found = product.variants.find(v =>
-          JSON.stringify(v.options) === JSON.stringify(selectedOptions)
-        );
-        if (found) currentVariant = found;
-      }
+      // find variant
+      let newVariant = product.variants.find(v =>
+        JSON.stringify(v.options) === JSON.stringify(selectedOptions)
+      );
 
-      // update main image
-      if (currentVariant?.featured_media) {
+      if (newVariant) currentVariant = newVariant;
+
+      // update image
+      if (currentVariant.featured_media) {
         mainImg.src = clean(currentVariant.featured_media.preview_image.src);
       }
     });
   });
 
-  /* -------------------------------
-     SIZE CHART
-  ------------------------------- */
-  if (sizeChartBtn) sizeChartBtn.onclick = () => sizeChart.classList.add("is-open");
-  if (sizeChartClose) sizeChartClose.onclick = () => sizeChart.classList.remove("is-open");
-  if (sizeChartBackdrop) sizeChartBackdrop.onclick = () => sizeChart.classList.remove("is-open");
+  /* ========= SIZE SWITCHING FIXED ========= */
+  document.querySelectorAll(".size-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
 
-  /* -------------------------------
-     GALLERY CLOSE
-  ------------------------------- */
-  if (galleryClose) galleryClose.onclick = () => galleryModal.classList.remove("is-open");
-  if (galleryBackdrop) galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
+      const value = btn.dataset.optionValue;
+
+      document.querySelectorAll(".size-pill").forEach(x => x.classList.remove("is-active"));
+      btn.classList.add("is-active");
+
+      document.getElementById("SelectedSize").textContent = value;
+
+      selectedOptions[1] = value;
+
+      let newVariant = product.variants.find(v =>
+        JSON.stringify(v.options) === JSON.stringify(selectedOptions)
+      );
+
+      if (newVariant) currentVariant = newVariant;
+    });
+  });
+
+  /* ========= SIZE CHART FIXED ========= */
+  if (sizeBtn) sizeBtn.onclick = () => sizeModal.classList.add("is-open");
+  if (sizeClose) sizeClose.onclick = () => sizeModal.classList.remove("is-open");
+  if (sizeBackdrop) sizeBackdrop.onclick = () => sizeModal.classList.remove("is-open");
 
 });
 </script>
+
 
