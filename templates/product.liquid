@@ -1,26 +1,179 @@
-<section class="product-layout">
+<section class="product-page">
+
+  <!-- LEFT: Image gallery -->
   <div class="product-gallery">
-    {% if product.media.size > 0 %}
-      {% assign first_media = product.media.first %}
-      {{ first_media | media_tag: image_size: '800x', class: 'product-main-image', id: 'ProductMainImage' }}
-    {% elsif product.featured_image %}
-      <img
-        id="ProductMainImage"
-        class="product-main-image"
-        src="{{ product.featured_image | img_url: '800x' }}"
-        alt="{{ product.title }}"
-      >
+    <div class="product-gallery-main">
+      {% if product.media.size > 0 %}
+        {% assign first_media = product.media.first %}
+        {{ first_media | media_tag: image_size: '800x', class: 'product-main-image', id: 'ProductMainImage' }}
+      {% elsif product.featured_image %}
+        <img
+          id="ProductMainImage"
+          class="product-main-image"
+          src="{{ product.featured_image | img_url: '800x' }}"
+          alt="{{ product.title }}"
+        >
+      {% endif %}
+    </div>
+
+    {% if product.media.size > 1 %}
+      <div class="product-gallery-thumbs" id="ProductThumbs">
+        {% for media in product.media %}
+          <button
+            type="button"
+            class="product-thumb{% if forloop.first %} is-active{% endif %}"
+            data-media-src="{{ media | image_url: width: 800 }}"
+          >
+            {{ media | media_tag: image_size: '120x' }}
+          </button>
+        {% endfor %}
+      </div>
     {% endif %}
   </div>
 
-  <div class="product-meta">
-    <h1>{{ product.title }}</h1>
 
-    <div class="product-price" id="ProductPrice">
+  <!-- MIDDLE: Title, color, size, details -->
+  <div class="product-main-info">
+    <div class="product-breadcrumb">
+      <!-- Optional: could add collection / category text here -->
+    </div>
+
+    <h1 class="product-title">
+      {{ product.title }}
+    </h1>
+
+    <div class="product-rating-placeholder">
+      ★★★★☆ <span>Amazon-style fake rating placeholder</span>
+    </div>
+
+    <div class="product-price-main" id="ProductPriceMain">
       {{ product.selected_or_first_available_variant.price | money }}
     </div>
 
-    <div class="product-availability" id="ProductAvailability">
+    {% assign option_count = product.options_with_values.size %}
+
+    <div class="product-selector">
+
+      {%- comment -%}
+        COLOR SECTION (if product has 2+ options, treat first as Color)
+      {%- endcomment -%}
+      {% if option_count >= 2 %}
+        {% assign color_option = product.options_with_values[0] %}
+        <div class="selector-block">
+          <div class="selector-label">
+            {{ color_option.name }}
+          </div>
+          <div class="color-swatch-grid">
+            {% for value in color_option.values %}
+              {%- assign swatch_image = blank -%}
+              {%- for v in product.variants -%}
+                {% if v.option1 == value and v.featured_media %}
+                  {%- assign swatch_image = v.featured_media.preview_image.src -%}
+                  {%- break -%}
+                {% endif %}
+              {%- endfor -%}
+
+              <button
+                type="button"
+                class="color-swatch{% if color_option.selected_value == value %} is-active{% endif %}"
+                data-option-index="0"
+                data-option-value="{{ value | escape }}"
+              >
+                {% if swatch_image %}
+                  <img src="{{ swatch_image | img_url: '120x' }}" alt="{{ value }}" />
+                {% endif %}
+                <span class="color-swatch-name">{{ value }}</span>
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {%- comment -%}
+        SIZE SECTION
+        If there are 2+ options, second is Size; if 1 option, treat that option as Size.
+      {%- endcomment -%}
+      {% if option_count >= 2 %}
+        {% assign size_option = product.options_with_values[1] %}
+      {% elsif option_count == 1 %}
+        {% assign size_option = product.options_with_values[0] %}
+      {% endif %}
+
+      {% if size_option %}
+        <div class="selector-block">
+          <div class="selector-label-row">
+            <div class="selector-label">
+              {% if option_count == 1 %}
+                Size
+              {% else %}
+                {{ size_option.name }}
+              {% endif %}
+              : <span id="SelectedSizeText">{{ size_option.selected_value }}</span>
+            </div>
+            <button type="button" class="size-chart-link" id="SizeChartButton">
+              Size chart
+            </button>
+          </div>
+
+          <div class="size-pill-grid">
+            {% for value in size_option.values %}
+              <button
+                type="button"
+                class="size-pill{% if size_option.selected_value == value %} is-active{% endif %}"
+                data-option-index="{% if option_count >= 2 %}1{% else %}0{% endif %}"
+                data-option-value="{{ value | escape }}"
+              >
+                {{ value }}
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Product details & About this item -->
+    <div class="product-details-section">
+      <h3>Product details</h3>
+      <ul class="product-details-list">
+        <!-- You can wire these up to metafields later. Placeholder for now. -->
+        <li><strong>Fabric type:</strong> 95% Cotton, 5% Elastane (example)</li>
+        <li><strong>Care instructions:</strong> Machine wash, cold</li>
+        <li><strong>Origin:</strong> Imported</li>
+        <li><strong>Closure type:</strong> Pull on</li>
+      </ul>
+    </div>
+
+    <div class="product-about-section">
+      <h3>About this item</h3>
+      <div class="product-description">
+        {{ product.description }}
+      </div>
+    </div>
+  </div>
+
+
+  <!-- RIGHT: Buy box -->
+  <div class="product-buy-box">
+    <div class="buy-box-price" id="BuyBoxPrice">
+      {{ product.selected_or_first_available_variant.price | money }}
+    </div>
+
+    <div class="buy-box-delivery">
+      <div id="BuyBoxDeliveryDate">
+        Estimated delivery:
+        <span class="delivery-date-value"></span>
+      </div>
+      <div class="buy-box-location">
+        {% if customer and customer.default_address %}
+          Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
+        {% else %}
+          Set delivery location at top bar
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="buy-box-stock" id="BuyBoxStock">
       {% if product.selected_or_first_available_variant.available %}
         In stock
       {% else %}
@@ -28,83 +181,105 @@
       {% endif %}
     </div>
 
-    {% form 'product', product, id: 'product-form' %}
-      <div class="product-options">
+    {% form 'product', product, id: 'product-buy-form' %}
+      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
 
-        {%- comment -%}
-          Amazon-style option buttons instead of dropdowns
-        {%- endcomment -%}
-
-        {% for option in product.options_with_values %}
-          {% assign option_label = option.name %}
-
-          {%- comment -%}
-            Your CJ imports are naming the single option "Brown" and values S/M/L/XXL,
-            which looks dumb. If there’s only 1 option, force the label to "Size".
-          {%- endcomment -%}
-          {% if product.options.size == 1 %}
-            {% assign option_label = 'Size' %}
-          {% endif %}
-
-          <div class="product-option-group" data-option-index="{{ forloop.index0 }}">
-            <div class="product-option-label">{{ option_label }}</div>
-            <div class="product-option-values">
-              {% for value in option.values %}
-                <button
-                  type="button"
-                  class="option-pill{% if option.selected_value == value %} is-active{% endif %}"
-                  data-option-index="{{ forloop.parentloop.index0 }}"
-                  data-option-value="{{ value | escape }}"
-                >
-                  {{ value }}
-                </button>
-              {% endfor %}
-            </div>
-          </div>
-        {% endfor %}
-
-        <label for="Quantity">Quantity</label>
-        <input id="Quantity" type="number" name="quantity" min="1" value="1">
-
+      <div class="buy-box-quantity">
+        <label for="BuyBoxQuantity">Quantity:</label>
+        <select id="BuyBoxQuantity" name="quantity"></select>
       </div>
 
-      <div class="product-actions">
-        <button type="submit" class="btn btn-primary">
-          Add to cart
+      <div class="buy-box-actions">
+        <button type="submit" class="btn btn-primary buy-box-add">
+          Add to Cart
         </button>
-
-        <button type="button" class="btn btn-outline" id="BuyNowButton" {% unless product.available %}disabled{% endunless %}>
-          Buy now
+        <button type="button" class="btn btn-outline buy-box-buy" id="BuyBoxBuyNow" {% unless product.available %}disabled{% endunless %}>
+          Buy Now
         </button>
       </div>
     {% endform %}
 
-    {% if product.description != blank %}
-      <div class="product-description">
-        {{ product.description }}
-      </div>
-    {% endif %}
+    <div class="buy-box-meta">
+      <div><strong>Ships from</strong> {{ shop.name }}</div>
+      <div><strong>Sold by</strong> {{ product.vendor }}</div>
+      <div><strong>Returns</strong> Returns available</div>
+      <div><strong>Payment</strong> Secure transaction</div>
+    </div>
   </div>
 </section>
 
+
+{%- comment -%}
+  SIZE CHART MODAL
+  Upload an image called "size-chart.png" to assets for this to work.
+{%- endcomment -%}
+<div class="size-chart-modal" id="SizeChartModal">
+  <div class="size-chart-backdrop"></div>
+  <div class="size-chart-content">
+    <button type="button" class="size-chart-close" id="SizeChartClose">×</button>
+    <h3>Size chart</h3>
+    <img src="{{ 'size-chart.png' | asset_url }}" alt="Size chart" />
+  </div>
+</div>
+
+
 <script>
   (function() {
-    // Full product data from Shopify
     var productData = {{ product | json }};
-    var form = document.getElementById('product-form');
-    if (!form) return;
+    var optionCount = productData.options ? productData.options.length : 0;
 
-    var priceEl = document.getElementById('ProductPrice');
-    var availabilityEl = document.getElementById('ProductAvailability');
-    var buyNowBtn = document.getElementById('BuyNowButton');
+    // --- IMAGE THUMBS ---
     var mainImageEl = document.getElementById('ProductMainImage');
+    var thumbs = document.querySelectorAll('.product-thumb');
+    thumbs.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var src = btn.getAttribute('data-media-src');
+        if (src && mainImageEl) {
+          mainImageEl.src = src;
+          thumbs.forEach(function(b) { b.classList.remove('is-active'); });
+          btn.classList.add('is-active');
+        }
+      });
+    });
 
-    // Initialize selected options from first variant
+    // --- SELECTED OPTIONS STATE ---
     var selectedOptions = [];
-    if (productData.variants.length > 0) {
-      var firstVariant = productData.variants[0];
-      if (firstVariant.options) {
-        selectedOptions = firstVariant.options.slice();
+    if (productData.variants && productData.variants.length > 0) {
+      selectedOptions = productData.variants[0].options.slice();
+    }
+
+    var priceMainEl = document.getElementById('ProductPriceMain');
+    var priceBoxEl = document.getElementById('BuyBoxPrice');
+    var stockBoxEl = document.getElementById('BuyBoxStock');
+    var buyNowBtn = document.getElementById('BuyBoxBuyNow');
+    var sizeTextEl = document.getElementById('SelectedSizeText');
+
+    var buyForm = document.getElementById('product-buy-form');
+    var buyFormIdInput = buyForm ? buyForm.querySelector('input[name="id"]') : null;
+
+    var quantitySelect = document.getElementById('BuyBoxQuantity');
+
+    function syncQuantitySelect(variant) {
+      if (!quantitySelect) return;
+      var maxQty = 1;
+
+      if (variant && variant.inventory_management && typeof variant.inventory_quantity === 'number') {
+        maxQty = variant.inventory_quantity;
+      } else {
+        maxQty = 50;
+      }
+
+      if (maxQty > 50) maxQty = 50;
+      if (maxQty < 1) maxQty = 1;
+
+      var current = parseInt(quantitySelect.value || '1', 10);
+      quantitySelect.innerHTML = '';
+      for (var i = 1; i <= maxQty; i++) {
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = i;
+        if (i === current) opt.selected = true;
+        quantitySelect.appendChild(opt);
       }
     }
 
@@ -112,85 +287,134 @@
       if (!productData.variants || productData.variants.length === 0) return null;
       if (!selectedOptions || selectedOptions.length === 0) return productData.variants[0];
 
-      return productData.variants.find(function(variant) {
-        return JSON.stringify(variant.options) === JSON.stringify(selectedOptions);
-      }) || productData.variants[0];
+      var found = productData.variants.find(function(v) {
+        return JSON.stringify(v.options) === JSON.stringify(selectedOptions);
+      });
+
+      return found || productData.variants[0];
     }
 
     function updateVariant() {
       var variant = findVariant();
       if (!variant) return;
 
-      // Hidden variant id input
-      var idInput = form.querySelector('input[name="id"]');
-      if (!idInput) {
-        idInput = document.createElement('input');
-        idInput.type = 'hidden';
-        idInput.name = 'id';
-        form.appendChild(idInput);
-      }
-      idInput.value = variant.id;
-
-      // Price
-      if (priceEl) {
-        priceEl.textContent = Shopify.formatMoney(variant.price, "{{ shop.money_format | escape }}");
+      if (buyFormIdInput) {
+        buyFormIdInput.value = variant.id;
       }
 
-      // Availability
-      if (availabilityEl) {
-        availabilityEl.textContent = variant.available ? 'In stock' : 'Out of stock';
-        availabilityEl.style.color = variant.available ? '#16a34a' : '#dc2626';
+      if (priceMainEl) {
+        priceMainEl.textContent = Shopify.formatMoney(variant.price, "{{ shop.money_format | escape }}");
+      }
+      if (priceBoxEl) {
+        priceBoxEl.textContent = Shopify.formatMoney(variant.price, "{{ shop.money_format | escape }}");
       }
 
-      // Buy Now button
+      if (stockBoxEl) {
+        if (variant.available) {
+          stockBoxEl.textContent = 'In stock';
+          stockBoxEl.style.color = '#16a34a';
+        } else {
+          stockBoxEl.textContent = 'Out of stock';
+          stockBoxEl.style.color = '#dc2626';
+        }
+      }
+
       if (buyNowBtn) {
         buyNowBtn.disabled = !variant.available;
         buyNowBtn.dataset.variantId = variant.id;
       }
 
-      // Main image from variant featured_media if available
-      if (mainImageEl && variant.featured_media && variant.featured_media.preview_image && variant.featured_media.preview_image.src) {
+      if (variant.featured_media && variant.featured_media.preview_image && variant.featured_media.preview_image.src && mainImageEl) {
         mainImageEl.src = variant.featured_media.preview_image.src;
       }
+
+      syncQuantitySelect(variant);
     }
 
-    // Handle clicks on option pills
-    form.addEventListener('click', function(e) {
-      var pill = e.target.closest('.option-pill');
-      if (!pill) return;
+    // COLOR + SIZE BUTTON HANDLERS
+    document.addEventListener('click', function(e) {
+      var colorBtn = e.target.closest('.color-swatch');
+      var sizeBtn = e.target.closest('.size-pill');
 
-      var optionIndex = parseInt(pill.getAttribute('data-option-index'), 10);
-      var optionValue = pill.getAttribute('data-option-value');
+      if (colorBtn) {
+        var idx = parseInt(colorBtn.getAttribute('data-option-index'), 10);
+        var val = colorBtn.getAttribute('data-option-value');
 
-      // Deactivate siblings
-      var group = pill.closest('.product-option-group');
-      if (group) {
-        group.querySelectorAll('.option-pill').forEach(function(btn) {
-          btn.classList.remove('is-active');
+        selectedOptions[idx] = val;
+
+        document.querySelectorAll('.color-swatch').forEach(function(b) {
+          b.classList.remove('is-active');
         });
+        colorBtn.classList.add('is-active');
+
+        updateVariant();
+        return;
       }
 
-      // Activate current
-      pill.classList.add('is-active');
+      if (sizeBtn) {
+        var sIdx = parseInt(sizeBtn.getAttribute('data-option-index'), 10);
+        var sVal = sizeBtn.getAttribute('data-option-value');
 
-      // Update selected options and variant
-      selectedOptions[optionIndex] = optionValue;
-      updateVariant();
+        selectedOptions[sIdx] = sVal;
+
+        document.querySelectorAll('.size-pill').forEach(function(b) {
+          b.classList.remove('is-active');
+        });
+        sizeBtn.classList.add('is-active');
+
+        if (sizeTextEl) sizeTextEl.textContent = sVal;
+
+        updateVariant();
+        return;
+      }
     });
 
-    // Buy now logic
-    if (buyNowBtn) {
+    // BUY NOW
+    if (buyNowBtn && quantitySelect) {
       buyNowBtn.addEventListener('click', function() {
         var variantId = buyNowBtn.dataset.variantId;
-        var qtyInput = document.getElementById('Quantity');
-        var qty = qtyInput && qtyInput.value ? qtyInput.value : 1;
-
+        var qty = quantitySelect.value || 1;
         if (!variantId) return;
         window.location.href = '/cart/' + variantId + ':' + qty + '?checkout=true';
       });
     }
 
-    // Initial sync
+    // SIZE CHART MODAL
+    var sizeChartBtn = document.getElementById('SizeChartButton');
+    var sizeChartModal = document.getElementById('SizeChartModal');
+    var sizeChartClose = document.getElementById('SizeChartClose');
+
+    if (sizeChartBtn && sizeChartModal) {
+      sizeChartBtn.addEventListener('click', function() {
+        sizeChartModal.classList.add('is-open');
+      });
+    }
+
+    if (sizeChartClose && sizeChartModal) {
+      sizeChartClose.addEventListener('click', function() {
+        sizeChartModal.classList.remove('is-open');
+      });
+    }
+
+    if (sizeChartModal) {
+      var backdrop = sizeChartModal.querySelector('.size-chart-backdrop');
+      if (backdrop) {
+        backdrop.addEventListener('click', function() {
+          sizeChartModal.classList.remove('is-open');
+        });
+      }
+    }
+
+    // ESTIMATED DELIVERY DATE (simple +7 days)
+    var deliverySpan = document.querySelector('.delivery-date-value');
+    if (deliverySpan) {
+      var d = new Date();
+      d.setDate(d.getDate() + 7);
+      var opts = { month: 'long', day: 'numeric' };
+      deliverySpan.textContent = d.toLocaleDateString('en-US', opts);
+    }
+
+    // INITIAL SYNC
     updateVariant();
   })();
 </script>
