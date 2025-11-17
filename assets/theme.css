@@ -678,3 +678,53 @@ body {
 .popup-thumbs img:hover {
   border-color: #f97316;
 }
+
+/* ===== POPUP GALLERY GRID FIX ===== */
+
+.gallery-popup-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 20px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 20px;
+}
+
+.popup-main-wrapper {
+  width: 100%;
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.popup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 600px;
+  padding-right: 5px;
+}
+
+.popup-grid img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+}
+
+.popup-grid img:hover {
+  border-color: #f97316;
+}

@@ -165,13 +165,14 @@
   <div class="image-gallery-content gallery-popup-layout">
     <button id="ImageGalleryClose" class="image-gallery-close">×</button>
 
-    <div class="gallery-left">
+    <div class="popup-main-wrapper">
       <img id="PopupMainImage" class="popup-main-img" src="">
     </div>
 
-    <div class="popup-thumbs" id="PopupThumbs"></div>
+    <div class="popup-grid" id="PopupThumbs"></div>
   </div>
 </div>
+
 
 
 <!-- SIZE CHART -->
@@ -255,7 +256,7 @@ document.addEventListener("DOMContentLoaded", function() {
   setupThumbnailClicks();
 
   /* ========= POPUP GALLERY CLEAN FIX ========= */
-    function openPopupGallery() {
+  function openPopupGallery() {
     const main = document.getElementById("PopupMainImage");
     const thumbs = document.getElementById("PopupThumbs");
 
