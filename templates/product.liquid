@@ -1,0 +1,142 @@
+<section class="product-layout">
+  <div class="product-gallery">
+    {% if product.media.size > 0 %}
+      {% assign first_media = product.media.first %}
+      {{ first_media | media_tag: image_size: '800x' }}
+    {% elsif product.featured_image %}
+      <img src="{{ product.featured_image | img_url: '800x' }}" alt="{{ product.title }}">
+    {% endif %}
+  </div>
+
+  <div class="product-meta">
+    <h1>{{ product.title }}</h1>
+
+    <div class="product-price" id="ProductPrice">
+      {{ product.selected_or_first_available_variant.price | money }}
+    </div>
+
+    <div class="product-availability" id="ProductAvailability">
+      {% if product.selected_or_first_available_variant.available %}
+        In stock
+      {% else %}
+        Out of stock
+      {% endif %}
+    </div>
+
+    {% form 'product', product, id: 'product-form' %}
+      <div class="product-options">
+        {% for option in product.options_with_values %}
+          <label for="Option{{ forloop.index }}">{{ option.name }}</label>
+          <select
+            id="Option{{ forloop.index }}"
+            name="options[{{ option.name }}]"
+            data-product-option
+          >
+            {% for value in option.values %}
+              <option
+                value="{{ value | escape }}"
+                {% if option.selected_value == value %}selected{% endif %}
+              >
+                {{ value }}
+              </option>
+            {% endfor %}
+          </select>
+        {% endfor %}
+
+        <label for="Quantity">Quantity</label>
+        <input id="Quantity" type="number" name="quantity" min="1" value="1">
+      </div>
+
+      <div class="product-actions">
+        <button type="submit" class="btn btn-primary">
+          Add to cart
+        </button>
+
+        <button type="button" class="btn btn-outline" id="BuyNowButton" {% unless product.available %}disabled{% endunless %}>
+          Buy now
+        </button>
+      </div>
+    {% endform %}
+
+    {% if product.description != blank %}
+      <div class="product-description">
+        {{ product.description }}
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+  (function() {
+    var productData = {{ product | json }};
+    var form = document.getElementById('product-form');
+    if (!form) return;
+
+    var priceEl = document.getElementById('ProductPrice');
+    var availabilityEl = document.getElementById('ProductAvailability');
+    var buyNowBtn = document.getElementById('BuyNowButton');
+
+    function findVariant() {
+      var selects = form.querySelectorAll('[data-product-option]');
+      var selectedOptions = [];
+      selects.forEach(function(select) {
+        selectedOptions.push(select.value);
+      });
+
+      return productData.variants.find(function(variant) {
+        return JSON.stringify(variant.options) === JSON.stringify(selectedOptions);
+      });
+    }
+
+    function updateVariant() {
+      var variant = findVariant();
+      if (!variant) return;
+
+      // Update hidden variant id input
+      var idInput = form.querySelector('input[name="id"]');
+      if (!idInput) {
+        idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'id';
+        form.appendChild(idInput);
+      }
+      idInput.value = variant.id;
+
+      // Update price
+      if (priceEl) {
+        priceEl.textContent = Shopify.formatMoney(variant.price, "{{ shop.money_format | escape }}");
+      }
+
+      // Update availability
+      if (availabilityEl) {
+        availabilityEl.textContent = variant.available ? 'In stock' : 'Out of stock';
+        availabilityEl.style.color = variant.available ? '#16a34a' : '#dc2626';
+      }
+
+      // Enable/disable Buy Now
+      if (buyNowBtn) {
+        buyNowBtn.disabled = !variant.available;
+        buyNowBtn.dataset.variantId = variant.id;
+      }
+    }
+
+    form.addEventListener('change', function(e) {
+      if (e.target.matches('[data-product-option]')) {
+        updateVariant();
+      }
+    });
+
+    if (buyNowBtn) {
+      buyNowBtn.addEventListener('click', function() {
+        var variantId = buyNowBtn.dataset.variantId || (productData.selected_or_first_available_variant && productData.selected_or_first_available_variant.id);
+        var qty = document.getElementById('Quantity').value || 1;
+        if (!variantId) return;
+
+        window.location.href = '/cart/' + variantId + ':' + qty + '?checkout=true';
+      });
+    }
+
+    // Initial setup
+    updateVariant();
+  })();
+</script>

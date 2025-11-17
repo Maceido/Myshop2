@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <title>{% if page_title %}{{ page_title }} - {% endif %}{{ shop.name }}</title>
+  {{ 'theme.css' | asset_url | stylesheet_tag }}
+  {{ content_for_header }}
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <a href="{{ routes.root_url }}">{{ shop.name }}</a>
+      </div>
+
+      <nav class="sidebar-menu">
+        {% render 'sidebar-menu' %}
+      </nav>
+
+      <div class="sidebar-account">
+        <h4>Account</h4>
+        {% if customer %}
+          <a href="{{ routes.account_url }}">My Account</a>
+          <a href="{{ routes.account_logout_url }}">Sign Out</a>
+        {% else %}
+          <a href="{{ routes.account_login_url }}">Sign In</a>
+          <a href="{{ routes.account_register_url }}">Create Account</a>
+        {% endif %}
+      </div>
+
+      <div class="sidebar-cart">
+        <a href="{{ routes.cart_url }}">Cart ({{ cart.item_count }})</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      {{ content_for_layout }}
+    </main>
+  </div>
+</body>
+</html>
