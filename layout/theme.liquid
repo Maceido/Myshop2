@@ -2,80 +2,84 @@
 <html lang="{{ request.locale.iso_code }}">
 <head>
   <meta charset="utf-8">
-  <title>{% if page_title %}{{ page_title }} - {% endif %}{{ shop.name }}</title>
+
+  <title>
+    {% if page_title %}
+      {{ page_title }} - 
+    {% endif %}
+    {{ shop.name }}
+  </title>
+
   {{ 'theme.css' | asset_url | stylesheet_tag }}
   {{ content_for_header }}
 </head>
-<header class="top-nav">
-  <div class="nav-left">
-    <a class="nav-logo" href="{{ routes.root_url }}">
-      Gents
-    </a>
 
-    {% if customer and customer.default_address %}
-      <button class="nav-location">
-        Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
-      </button>
-    {% else %}
-      <button class="nav-location">
-        Set delivery location
-      </button>
-    {% endif %}
-  </div>
+<body>
 
-  <div class="nav-center">
-    <form action="/search" method="get" class="nav-search">
-      <input type="search" name="q" placeholder="Search products">
-      <button type="submit">Search</button>
-    </form>
-  </div>
+  <!-- TOP NAVBAR (Amazon-style) -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <a class="nav-logo" href="{{ routes.root_url }}">
+        <img src="{{ 'gents.png' | file_url }}" alt="Gents" class="logo-img">
+      </a>
 
-  <div class="nav-right">
-    <div class="nav-lang">
-      <select name="lang">
-        <option value="en" selected>EN</option>
-        <option value="es">ES</option>
-      </select>
+      {% if customer and customer.default_address %}
+        <button class="nav-location">
+          Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
+        </button>
+      {% else %}
+        <button class="nav-location">
+          Set delivery location
+        </button>
+      {% endif %}
     </div>
 
-    <a href="/account" class="nav-orders">Orders</a>
-    <a href="/account" class="nav-account">My Account</a>
+    <div class="nav-center">
+      <form action="/search" method="get" class="nav-search">
+        <input type="search" name="q" placeholder="Search products">
+        <button type="submit">Search</button>
+      </form>
+    </div>
 
-    <a href="{{ routes.cart_url }}" class="nav-cart">
-      Cart ({{ cart.item_count }})
-    </a>
-  </div>
-</header>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <a href="{{ routes.root_url }}">{{ shop.name }}</a>
+    <div class="nav-right">
+      <div class="nav-lang">
+        <select name="lang">
+          <option value="en" selected>EN</option>
+          <option value="es">ES</option>
+        </select>
       </div>
+
+      <a href="/account" class="nav-orders">Orders</a>
+      <a href="/account" class="nav-account">My Account</a>
+
+      <a href="{{ routes.cart_url }}" class="nav-cart">
+        Cart ({{ cart.item_count }})
+      </a>
+    </div>
+  </header>
+
+
+
+  <!-- PAGE LAYOUT (Left sidebar + main content) -->
+  <div class="layout">
+
+    <!-- SIDEBAR (categories only) -->
+    <aside class="sidebar">
 
       <nav class="sidebar-menu">
         {% render 'sidebar-menu' %}
       </nav>
 
-      <div class="sidebar-account">
-        <h4>Account</h4>
-        {% if customer %}
-          <a href="{{ routes.account_url }}">My Account</a>
-          <a href="{{ routes.account_logout_url }}">Sign Out</a>
-        {% else %}
-          <a href="{{ routes.account_login_url }}">Sign In</a>
-          <a href="{{ routes.account_register_url }}">Create Account</a>
-        {% endif %}
-      </div>
-
-      <div class="sidebar-cart">
-        <a href="{{ routes.cart_url }}">Cart ({{ cart.item_count }})</a>
-      </div>
     </aside>
 
+
+    <!-- MAIN CONTENT -->
     <main class="content">
       {{ content_for_layout }}
     </main>
+
   </div>
+
+
 </body>
 </html>
