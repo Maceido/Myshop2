@@ -219,7 +219,35 @@
   <div class="size-chart-content">
     <button id="SizeChartClose" class="size-chart-close">×</button>
     <h3>Size Chart</h3>
-    <img src="{{ 'size-chart.png' | asset_url }}" alt="Size chart">
+    <!-- SIZE CHART GRID (NO IMAGE REQUIRED) -->
+    <div class="size-chart-grid">
+    <table>
+        <thead>
+        <tr>
+            <th>Size</th>
+            <th>Chest (in)</th>
+            <th>Chest (cm)</th>
+            <th>Length (in)</th>
+            <th>Length (cm)</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% assign chart = product.metafields.specs.size_chart %}
+
+        {% if chart %}
+            {{ chart | metafield_text }}
+        {% else %}
+            <!-- FALLBACK AUTO GRID -->
+            <tr><td>S</td><td>34–36</td><td>86–91</td><td>26</td><td>66</td></tr>
+            <tr><td>M</td><td>38–40</td><td>96–102</td><td>27</td><td>68.5</td></tr>
+            <tr><td>L</td><td>42–44</td><td>107–112</td><td>28</td><td>71</td></tr>
+            <tr><td>XL</td><td>46–48</td><td>117–122</td><td>29</td><td>73.5</td></tr>
+            <tr><td>XXL</td><td>50–52</td><td>127–132</td><td>30</td><td>76</td></tr>
+        {% endif %}
+        </tbody>
+    </table>
+    </div>
   </div>
 </div>
 
