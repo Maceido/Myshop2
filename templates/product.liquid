@@ -183,14 +183,24 @@
 document.addEventListener("DOMContentLoaded", function() {
 
   const product = {{ product | json }};
-  let currentVariant = product.selected_or_first_available_variant;
-  let selectedOptions = currentVariant.options.slice();
+
+  // HARDENED SAFE VARIANT PICKER
+  let currentVariant = product.selected_or_first_available_variant || product.variants?.[0] || {
+    id: null,
+    price: product.price || product.price_min || 0,
+    available: true,
+    options: []
+  };
+
+  // ALWAYS ensure selectedOptions exists
+  let selectedOptions = Array.isArray(currentVariant.options)
+    ? currentVariant.options.slice()
+    : [];
 
   const mainImg = document.getElementById("MainImage");
   const thumbs = document.getElementById("SideThumbs");
   const gallery = document.getElementById("ImageGalleryCarousel");
   const galleryModal = document.getElementById("ImageGalleryModal");
-
   const galleryClose = document.getElementById("ImageGalleryClose");
   const galleryBackdrop = document.querySelector(".image-gallery-backdrop");
 
@@ -201,17 +211,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function clean(url){ return url ? url.split("?")[0] : ""; }
 
-  function showAllImagesModal() {
-    gallery.innerHTML = "";
-    product.media.forEach(m => {
-      const img = document.createElement("img");
-      img.src = clean(m.src);
-      img.className = "gallery-big-image";
-      gallery.appendChild(img);
-    });
-    galleryModal.classList.add("is-open");
-  }
-
+  /* -------------------------------
+     THUMBNAILS
+  ------------------------------- */
   function attachThumbClicks() {
     document.querySelectorAll(".product-thumb").forEach(btn => {
       if (btn.classList.contains("product-thumb-more")) {
@@ -226,35 +228,68 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
+  /* -------------------------------
+     OPEN FULLSCREEN GALLERY
+  ------------------------------- */
+  function showAllImagesModal() {
+    if (!product.media) return;
+
+    gallery.innerHTML = "";
+    product.media.forEach(m => {
+      const img = document.createElement("img");
+      img.src = clean(m.src);
+      img.className = "gallery-big-image";
+      gallery.appendChild(img);
+    });
+
+    galleryModal.classList.add("is-open");
+  }
+
   attachThumbClicks();
 
-  // COLOR SWITCHING (ONLY CHANGES MAIN IMAGE)
+  /* -------------------------------
+     COLOR SWITCHING (SAFE)
+  ------------------------------- */
   document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.addEventListener("click", () => {
-      const value = btn.dataset.optionValue;
-      selectedOptions[0] = value;
 
+      const value = btn.dataset.optionValue;
+
+      // update UI
       document.querySelectorAll(".color-swatch").forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
+      document.getElementById("SelectedColor").textContent = value;
 
-      // update main to variant featured image
-      const variant = product.variants.find(v => 
-        JSON.stringify(v.options) === JSON.stringify(selectedOptions)
-      );
-      if (variant && variant.featured_media) {
-        mainImg.src = clean(variant.featured_media.preview_image.src);
+      // find variant safely
+      if (product.variants && product.variants.length > 0) {
+        selectedOptions[0] = value;
+
+        const found = product.variants.find(v =>
+          JSON.stringify(v.options) === JSON.stringify(selectedOptions)
+        );
+        if (found) currentVariant = found;
       }
 
-      document.getElementById("SelectedColor").textContent = value;
+      // update main image
+      if (currentVariant?.featured_media) {
+        mainImg.src = clean(currentVariant.featured_media.preview_image.src);
+      }
     });
   });
 
+  /* -------------------------------
+     SIZE CHART
+  ------------------------------- */
   if (sizeChartBtn) sizeChartBtn.onclick = () => sizeChart.classList.add("is-open");
   if (sizeChartClose) sizeChartClose.onclick = () => sizeChart.classList.remove("is-open");
   if (sizeChartBackdrop) sizeChartBackdrop.onclick = () => sizeChart.classList.remove("is-open");
 
-  galleryClose.onclick = () => galleryModal.classList.remove("is-open");
-  galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
+  /* -------------------------------
+     GALLERY CLOSE
+  ------------------------------- */
+  if (galleryClose) galleryClose.onclick = () => galleryModal.classList.remove("is-open");
+  if (galleryBackdrop) galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
 
 });
 </script>
+
