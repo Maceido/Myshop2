@@ -20,7 +20,11 @@
   <header class="top-nav">
     <div class="nav-left">
       <a class="nav-logo" href="{{ routes.root_url }}">
-        <img src="{{ 'gents.png' | asset_url }}" alt="Gents" class="logo-img">
+        <img 
+            src="{{ 'gents.png' | asset_url }}" 
+            alt="Gents" 
+            class="nav-gents-logo"
+        />
       </a>
 
       {% if customer and customer.default_address %}

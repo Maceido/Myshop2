@@ -112,6 +112,19 @@ body {
   color: #222;
 }
 
+.nav-gents-logo {
+  height: 32px;       /* make it smaller */
+  width: auto;        /* keep proportions */
+  display: block;
+  object-fit: contain;
+}
+
+@media (max-width: 600px) {
+  .nav-gents-logo {
+    height: 26px;     /* even smaller for mobile */
+  }
+}
+
 .nav-location {
   margin-left: 12px;
   font-size: 12px;
