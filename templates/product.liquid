@@ -305,34 +305,37 @@ document.addEventListener("DOMContentLoaded", function() {
     ) || product.variants[0];
   }
 
+  // ⭐ THIS IS THE ZERO-BULLSHIT VERSION
+  // Always use:
+  // 1. variant.featured_media (main image)
+  // 2. other media also assigned to variant.variant_ids
+  // No guessing, no matching by name.
   function getMediaForVariant(variant) {
-    const colorName = (variant.options[0] || "").toLowerCase().trim();
-    const firstWord = colorName.split(" ")[0];
+    let media = [];
 
-    // 1. Exact variant media
-    let media = product.media.filter(m =>
-      Array.isArray(m.variant_ids) && m.variant_ids.includes(variant.id)
-    );
-    if (media.length) return media;
+    // Include featured media FIRST
+    if (variant.featured_media) {
+      media.push({
+        src: clean(variant.featured_media.preview_image.src)
+      });
+    }
 
-    // 2. Filename/alt contains full color name
-    media = product.media.filter(m => {
-      const alt = (m.alt || "").toLowerCase();
-      const src = clean(m.src || "").toLowerCase();
-      return alt.includes(colorName) || src.includes(colorName);
+    // Then include any variant-assigned media
+    product.media.forEach(m => {
+      if (Array.isArray(m.variant_ids) && m.variant_ids.includes(variant.id)) {
+        const cleanSrc = clean(m.src);
+        if (!media.some(x => x.src === cleanSrc)) {
+          media.push({ src: cleanSrc });
+        }
+      }
     });
-    if (media.length) return media;
 
-    // 3. Filename/alt contains first word of color
-    media = product.media.filter(m => {
-      const alt = (m.alt || "").toLowerCase();
-      const src = clean(m.src || "").toLowerCase();
-      return alt.includes(firstWord) || src.includes(firstWord);
-    });
-    if (media.length) return media;
+    // If NOTHING assigned, fallback to all product media
+    if (media.length === 0) {
+      media = product.media.map(m => ({ src: clean(m.src) }));
+    }
 
-    // 4. fallback: all media
-    return product.media.slice();
+    return media;
   }
 
   function setMainImage(src) {
@@ -340,11 +343,14 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function attachThumbEvents() {
-    document.querySelectorAll(".product-thumb:not(.product-thumb-more)").forEach(btn => {
+    const buttons = thumbsContainer.querySelectorAll(".product-thumb:not(.product-thumb-more)");
+
+    buttons.forEach(btn => {
       btn.addEventListener("click", () => {
         const src = btn.dataset.mediaSrc;
         setMainImage(src);
-        document.querySelectorAll(".product-thumb").forEach(x => x.classList.remove("is-active"));
+
+        buttons.forEach(x => x.classList.remove("is-active"));
         btn.classList.add("is-active");
       });
     });
@@ -361,8 +367,8 @@ document.addEventListener("DOMContentLoaded", function() {
         thumbsContainer.innerHTML += `
           <button type="button"
             class="product-thumb ${index === 0 ? "is-active" : ""}"
-            data-media-src="${clean(m.src)}">
-            <img src="${clean(m.src)}" width="120">
+            data-media-src="${m.src}">
+            <img src="${m.src}" width="120">
           </button>
         `;
       }
@@ -370,9 +376,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (media.length > max) {
       thumbsContainer.innerHTML += `
-        <button type="button"
-          class="product-thumb product-thumb-more"
-          data-more="true">
+        <button type="button" class="product-thumb product-thumb-more">
           +${media.length - max}
         </button>
       `;
@@ -400,21 +404,18 @@ document.addEventListener("DOMContentLoaded", function() {
     priceMain.textContent = moneyFormat(currentVariant.price);
     priceBox.textContent = moneyFormat(currentVariant.price);
 
-    if (currentVariant.available) {
-      stockBox.textContent = "In stock";
-      stockBox.style.color = "#16a34a";
-    } else {
-      stockBox.textContent = "Out of stock";
-      stockBox.style.color = "#dc2626";
-    }
+    stockBox.textContent = currentVariant.available ? "In stock" : "Out of stock";
+    stockBox.style.color = currentVariant.available ? "#16a34a" : "#dc2626";
 
     variantIdInput.value = currentVariant.id;
 
     syncQuantity(currentVariant);
+
+    // ⭐ KEY PART
     renderThumbsForVariant(currentVariant);
   }
 
-  // COLOR SWATCHES
+  // COLOR CLICK
   document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.addEventListener("click", () => {
       const idx = parseInt(btn.dataset.optionIndex);
@@ -431,7 +432,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  // SIZE PILLS
+  // SIZE CLICK
   document.querySelectorAll(".size-pill").forEach(btn => {
     btn.addEventListener("click", () => {
       const idx = parseInt(btn.dataset.optionIndex);
@@ -453,10 +454,11 @@ document.addEventListener("DOMContentLoaded", function() {
     window.location.href = `/cart/${currentVariant.id}:1?checkout=true`;
   });
 
-  // INITIAL
+  // INITIAL SETUP
   updateVariantDetails();
 
 });
 </script>
+
 
 
