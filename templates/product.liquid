@@ -2,9 +2,14 @@
   <div class="product-gallery">
     {% if product.media.size > 0 %}
       {% assign first_media = product.media.first %}
-      {{ first_media | media_tag: image_size: '800x' }}
+      {{ first_media | media_tag: image_size: '800x', class: 'product-main-image', id: 'ProductMainImage' }}
     {% elsif product.featured_image %}
-      <img src="{{ product.featured_image | img_url: '800x' }}" alt="{{ product.title }}">
+      <img
+        id="ProductMainImage"
+        class="product-main-image"
+        src="{{ product.featured_image | img_url: '800x' }}"
+        alt="{{ product.title }}"
+      >
     {% endif %}
   </div>
 
@@ -25,26 +30,42 @@
 
     {% form 'product', product, id: 'product-form' %}
       <div class="product-options">
+
+        {%- comment -%}
+          Amazon-style option buttons instead of dropdowns
+        {%- endcomment -%}
+
         {% for option in product.options_with_values %}
-          <label for="Option{{ forloop.index }}">{{ option.name }}</label>
-          <select
-            id="Option{{ forloop.index }}"
-            name="options[{{ option.name }}]"
-            data-product-option
-          >
-            {% for value in option.values %}
-              <option
-                value="{{ value | escape }}"
-                {% if option.selected_value == value %}selected{% endif %}
-              >
-                {{ value }}
-              </option>
-            {% endfor %}
-          </select>
+          {% assign option_label = option.name %}
+
+          {%- comment -%}
+            Your CJ imports are naming the single option "Brown" and values S/M/L/XXL,
+            which looks dumb. If there’s only 1 option, force the label to "Size".
+          {%- endcomment -%}
+          {% if product.options.size == 1 %}
+            {% assign option_label = 'Size' %}
+          {% endif %}
+
+          <div class="product-option-group" data-option-index="{{ forloop.index0 }}">
+            <div class="product-option-label">{{ option_label }}</div>
+            <div class="product-option-values">
+              {% for value in option.values %}
+                <button
+                  type="button"
+                  class="option-pill{% if option.selected_value == value %} is-active{% endif %}"
+                  data-option-index="{{ forloop.parentloop.index0 }}"
+                  data-option-value="{{ value | escape }}"
+                >
+                  {{ value }}
+                </button>
+              {% endfor %}
+            </div>
+          </div>
         {% endfor %}
 
         <label for="Quantity">Quantity</label>
         <input id="Quantity" type="number" name="quantity" min="1" value="1">
+
       </div>
 
       <div class="product-actions">
@@ -68,6 +89,7 @@
 
 <script>
   (function() {
+    // Full product data from Shopify
     var productData = {{ product | json }};
     var form = document.getElementById('product-form');
     if (!form) return;
@@ -75,24 +97,31 @@
     var priceEl = document.getElementById('ProductPrice');
     var availabilityEl = document.getElementById('ProductAvailability');
     var buyNowBtn = document.getElementById('BuyNowButton');
+    var mainImageEl = document.getElementById('ProductMainImage');
+
+    // Initialize selected options from first variant
+    var selectedOptions = [];
+    if (productData.variants.length > 0) {
+      var firstVariant = productData.variants[0];
+      if (firstVariant.options) {
+        selectedOptions = firstVariant.options.slice();
+      }
+    }
 
     function findVariant() {
-      var selects = form.querySelectorAll('[data-product-option]');
-      var selectedOptions = [];
-      selects.forEach(function(select) {
-        selectedOptions.push(select.value);
-      });
+      if (!productData.variants || productData.variants.length === 0) return null;
+      if (!selectedOptions || selectedOptions.length === 0) return productData.variants[0];
 
       return productData.variants.find(function(variant) {
         return JSON.stringify(variant.options) === JSON.stringify(selectedOptions);
-      });
+      }) || productData.variants[0];
     }
 
     function updateVariant() {
       var variant = findVariant();
       if (!variant) return;
 
-      // Update hidden variant id input
+      // Hidden variant id input
       var idInput = form.querySelector('input[name="id"]');
       if (!idInput) {
         idInput = document.createElement('input');
@@ -102,41 +131,66 @@
       }
       idInput.value = variant.id;
 
-      // Update price
+      // Price
       if (priceEl) {
         priceEl.textContent = Shopify.formatMoney(variant.price, "{{ shop.money_format | escape }}");
       }
 
-      // Update availability
+      // Availability
       if (availabilityEl) {
         availabilityEl.textContent = variant.available ? 'In stock' : 'Out of stock';
         availabilityEl.style.color = variant.available ? '#16a34a' : '#dc2626';
       }
 
-      // Enable/disable Buy Now
+      // Buy Now button
       if (buyNowBtn) {
         buyNowBtn.disabled = !variant.available;
         buyNowBtn.dataset.variantId = variant.id;
       }
+
+      // Main image from variant featured_media if available
+      if (mainImageEl && variant.featured_media && variant.featured_media.preview_image && variant.featured_media.preview_image.src) {
+        mainImageEl.src = variant.featured_media.preview_image.src;
+      }
     }
 
-    form.addEventListener('change', function(e) {
-      if (e.target.matches('[data-product-option]')) {
-        updateVariant();
+    // Handle clicks on option pills
+    form.addEventListener('click', function(e) {
+      var pill = e.target.closest('.option-pill');
+      if (!pill) return;
+
+      var optionIndex = parseInt(pill.getAttribute('data-option-index'), 10);
+      var optionValue = pill.getAttribute('data-option-value');
+
+      // Deactivate siblings
+      var group = pill.closest('.product-option-group');
+      if (group) {
+        group.querySelectorAll('.option-pill').forEach(function(btn) {
+          btn.classList.remove('is-active');
+        });
       }
+
+      // Activate current
+      pill.classList.add('is-active');
+
+      // Update selected options and variant
+      selectedOptions[optionIndex] = optionValue;
+      updateVariant();
     });
 
+    // Buy now logic
     if (buyNowBtn) {
       buyNowBtn.addEventListener('click', function() {
-        var variantId = buyNowBtn.dataset.variantId || (productData.selected_or_first_available_variant && productData.selected_or_first_available_variant.id);
-        var qty = document.getElementById('Quantity').value || 1;
-        if (!variantId) return;
+        var variantId = buyNowBtn.dataset.variantId;
+        var qtyInput = document.getElementById('Quantity');
+        var qty = qtyInput && qtyInput.value ? qtyInput.value : 1;
 
+        if (!variantId) return;
         window.location.href = '/cart/' + variantId + ':' + qty + '?checkout=true';
       });
     }
 
-    // Initial setup
+    // Initial sync
     updateVariant();
   })();
 </script>

@@ -328,4 +328,39 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
+.product-option-group {
+  margin-top: 16px;
+}
+
+.product-option-label {
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.product-option-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #d4d4d4;
+  background: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.option-pill.is-active {
+  border-color: #f97316;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.option-pill:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
