@@ -1,6 +1,5 @@
 <!-- PRODUCT PAGE LAYOUT -->
 <section class="product-page">
-
 <div class="product-gallery">
 
   <!-- SIDE THUMBNAILS (DYNAMIC) -->
@@ -299,135 +298,95 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedOptions = product.variants[0].options.slice();
 
   const mainImg = document.getElementById("MainImage");
-  const thumbs = document.querySelectorAll(".product-thumb:not([data-more])");
-  const colorBtns = document.querySelectorAll(".color-swatch");
-  const sizeBtns = document.querySelectorAll(".size-pill");
+  const thumbsContainer = document.getElementById("SideThumbs");
 
-  /** Normalize URLs so Shopify stops lying */
-  function clean(url) {
-    return url ? url.split("?")[0] : "";
+  /** GET IMAGES FOR VARIANT */
+  function getVariantMedia(variantId) {
+    const variantMedia = product.media.filter(m =>
+      m.variant_ids && m.variant_ids.includes(variantId)
+    );
+    return variantMedia.length > 0 ? variantMedia : product.media;
   }
 
-  /** Swap main image */
+  /** SET MAIN IMAGE */
   function setMain(src) {
-    if (!src) return;
-    mainImg.src = clean(src);
+    mainImg.src = src.split("?")[0];
   }
 
-  /** Find variant object */
+  /** RENDER THUMBNAILS FOR CURRENT VARIANT */
+  function renderThumbs(variant) {
+    const media = getVariantMedia(variant.id);
+    thumbsContainer.innerHTML = "";
+
+    const max = 5;
+
+    media.forEach((m, i) => {
+      if (i < max) {
+        thumbsContainer.innerHTML += `
+          <button class="product-thumb ${i === 0 ? "is-active" : ""}"
+                  data-media-src="${m.src}">
+            <img src="${m.src}" width="120">
+          </button>
+        `;
+      }
+    });
+
+    if (media.length > max) {
+      thumbsContainer.innerHTML += `
+        <button class="product-thumb product-thumb-more" data-more="true">
+          +${media.length - max}
+        </button>
+      `;
+    }
+
+    // Update main image
+    setMain(media[0].src);
+
+    // reattach events
+    attachThumbEvents();
+  }
+
+  /** THUMB CLICK EVENTS */
+  function attachThumbEvents() {
+    document.querySelectorAll(".product-thumb:not(.product-thumb-more)").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const src = btn.dataset.mediaSrc;
+        setMain(src);
+        document.querySelectorAll(".product-thumb").forEach(b => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+      });
+    });
+  }
+
+  /** FIND VARIANT */
   function findVariant() {
     return product.variants.find(v =>
       JSON.stringify(v.options) === JSON.stringify(selectedOptions)
     ) || product.variants[0];
   }
 
-  /** Update variant = price, stock, image */
+  /** UPDATE VARIANT */
   function updateVariant() {
     const v = findVariant();
-    if (!v) return;
-
-    // Price
-    document.getElementById("PriceMain").innerHTML =
-      (v.price / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
-
-    document.getElementById("BuyBoxPrice").innerHTML =
-      (v.price / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
-
-    // Stock
-    const stock = document.getElementById("StockBox");
-    if (v.available) {
-      stock.textContent = "In stock";
-      stock.style.color = "#16a34a";
-    } else {
-      stock.textContent = "Out of stock";
-      stock.style.color = "#dc2626";
-    }
-
-    // Image
-    if (v.featured_media) {
-      setMain(v.featured_media.preview_image.src);
-    }
-
-    // Qty
-    const qtySelect = document.getElementById("QtySelect");
-    qtySelect.innerHTML = "";
-    let max = v.inventory_management ? v.inventory_quantity : 50;
-    if (max > 50) max = 50;
-    if (max < 1) max = 1;
-    for (let i = 1; i <= max; i++) {
-      const o = document.createElement("option");
-      o.value = i;
-      o.textContent = i;
-      qtySelect.appendChild(o);
-    }
+    renderThumbs(v);
   }
 
-  /** Thumbnail click */
-  thumbs.forEach(btn => {
-    btn.addEventListener("click", () => {
-      setMain(btn.dataset.mediaSrc);
-    });
-  });
-
-  /** Color click */
-  colorBtns.forEach(btn => {
+  /** COLOR CHANGE */
+  document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.addEventListener("click", () => {
       const idx = btn.dataset.optionIndex;
       const val = btn.dataset.optionValue;
 
-      colorBtns.forEach(b => b.classList.remove("is-active"));
+      selectedOptions[idx] = val;
+
+      document.querySelectorAll(".color-swatch").forEach(b => b.classList.remove("is-active"));
       btn.classList.add("is-active");
 
-      document.getElementById("SelectedColor").textContent = val;
-      selectedOptions[idx] = val;
       updateVariant();
     });
   });
 
-  /** Size click */
-  sizeBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const idx = btn.dataset.optionIndex;
-      const val = btn.dataset.optionValue;
-
-      sizeBtns.forEach(b => b.classList.remove("is-active"));
-      btn.classList.add("is-active");
-
-      document.getElementById("SelectedSize").textContent = val;
-      selectedOptions[idx] = val;
-      updateVariant();
-    });
-  });
-
-  /** MORE IMAGES → FULLSCREEN VIEWER */
-  const moreBtn = document.querySelector(".product-thumb-more");
-  const modal = document.getElementById("ImageGalleryModal");
-  const closeModal = document.getElementById("ImageGalleryClose");
-  const backdrop = document.querySelector(".image-gallery-backdrop");
-
-  if (moreBtn) {
-    moreBtn.addEventListener("click", () => modal.classList.add("is-open"));
-  }
-  if (closeModal) closeModal.addEventListener("click", () => modal.classList.remove("is-open"));
-  if (backdrop) backdrop.addEventListener("click", () => modal.classList.remove("is-open"));
-
-  /** BUY NOW */
-  const buyNowBtn = document.getElementById("BuyNowBtn");
-  buyNowBtn.addEventListener("click", () => {
-    const v = findVariant();
-    window.location.href = `/cart/${v.id}:1?checkout=true`;
-  });
-
-  /** SIZE CHART */
-  const sizeBtn = document.getElementById("SizeChartButton");
-  const sizeModal = document.getElementById("SizeChartModal");
-  const sizeClose = document.getElementById("SizeChartClose");
-  const sizeBackdrop = document.querySelector(".size-chart-backdrop");
-
-  if (sizeBtn) sizeBtn.addEventListener("click", () => sizeModal.classList.add("is-open"));
-  if (sizeClose) sizeClose.addEventListener("click", () => sizeModal.classList.remove("is-open"));
-  if (sizeBackdrop) sizeBackdrop.addEventListener("click", () => sizeModal.classList.remove("is-open"));
-
+  // INITIAL LOAD
   updateVariant();
 });
 </script>
