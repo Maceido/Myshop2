@@ -345,21 +345,34 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.querySelectorAll(".color-swatch").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const idx = btn.dataset.optionIndex;
-      const val = btn.dataset.optionValue;
+  btn.addEventListener("click", () => {
+    const idx = parseInt(btn.dataset.optionIndex);
+    const val = btn.dataset.optionValue;
 
-      selectedOptions[idx] = val;
+    // Update selected options
+    selectedOptions[idx] = val;
 
-      document.querySelectorAll(".color-swatch").forEach(b => b.classList.remove("is-active"));
-      btn.classList.add("is-active");
+    // Update swatch selection UI
+    document.querySelectorAll(".color-swatch").forEach(b => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
 
-      document.getElementById("SelectedColor").textContent = val;
+    document.getElementById("SelectedColor").textContent = val;
 
-      updateVariant();
-    });
+    // Find the variant for this color
+    const variant = product.variants.find(v => 
+      JSON.stringify(v.options) === JSON.stringify(selectedOptions)
+    );
+
+    if (!variant) return;
+
+    // Update main image to variant’s featured image
+    if (variant.featured_media && variant.featured_media.preview_image.src) {
+      const cleanSrc = variant.featured_media.preview_image.src.split("?")[0];
+      document.getElementById("MainImage").src = cleanSrc;
+    }
+
+    // Now re-render the side thumbs for the variant
+    renderThumbs(variant);
   });
-
-  updateVariant();
 });
 </script>
