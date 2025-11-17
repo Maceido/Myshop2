@@ -1,19 +1,58 @@
 <ul class="sidebar-root">
+
+  <!-- Trending -->
   <li class="cat">
-    <button class="cat-toggle">Clothing, Shoes, Jewelry & Watches</button>
+    <button class="cat-toggle">Trending</button>
     <ul class="sub">
-      <li><a href="/collections/amazon-fashion">Amazon Fashion</a></li>
-      <li><a href="/collections/women">Women</a></li>
-      <li><a href="/collections/men">Men</a></li>
-      <li><a href="/collections/girls">Girls</a></li>
-      <li><a href="/collections/boys">Boys</a></li>
-      <li><a href="/collections/baby">Baby</a></li>
-      <li><a href="/collections/luggage">Luggage</a></li>
-      <li><a href="/collections/luxury">Amazon Luxury</a></li>
-      <li><a href="/collections/deals">Sales & Deals</a></li>
+      <li><a href="/collections/best-sellers">Best Sellers</a></li>
+      <li><a href="/collections/new-releases">New Releases</a></li>
     </ul>
   </li>
+
+
+  <!-- Shop by Department -->
+  <li class="cat">
+    <button class="cat-toggle">Shop by Department</button>
+    <ul class="sub">
+
+      <li><a href="/collections/clothing-shoes-jewelry-watches">Clothing, Shoes, Jewelry & Watches</a></li>
+      <li><a href="/collections/books-media">Books & Media</a></li>
+      <li><a href="/collections/movies-music-games">Movies, Music & Games</a></li>
+      <li><a href="/collections/electronics">Electronics</a></li>
+      <li><a href="/collections/computers-office">Computers & Office</a></li>
+      <li><a href="/collections/smart-home">Smart Home</a></li>
+      <li><a href="/collections/home-garden-tools">Home, Garden & Tools</a></li>
+      <li><a href="/collections/pet-supplies">Pet Supplies</a></li>
+      <li><a href="/collections/food-grocery">Food & Grocery</a></li>
+      <li><a href="/collections/beauty-health">Beauty & Health</a></li>
+      <li><a href="/collections/toys-kids-baby">Toys, Kids & Baby</a></li>
+      <li><a href="/collections/handmade-crafts">Handmade & Crafts</a></li>
+      <li><a href="/collections/sports-outdoors">Sports & Outdoors</a></li>
+      <li><a href="/collections/automotive">Automotive</a></li>
+      <li><a href="/collections/industrial-scientific">Industrial & Scientific</a></li>
+
+    </ul>
+  </li>
+
+
+  <!-- Help & Settings -->
+  <li class="cat">
+    <button class="cat-toggle">Help & Settings</button>
+    <ul class="sub">
+      <li><a href="/account">Account</a></li>
+      <li><a href="#language">Language</a></li>
+      <li><a href="#region">Country / Region</a></li>
+
+      {% if customer %}
+        <li><a href="{{ routes.account_logout_url }}">Sign Out</a></li>
+      {% else %}
+        <li><a href="{{ routes.account_login_url }}">Sign In</a></li>
+      {% endif %}
+    </ul>
+  </li>
+
 </ul>
+
 
 <script>
 document.querySelectorAll('.cat-toggle').forEach(btn => {
@@ -22,4 +61,3 @@ document.querySelectorAll('.cat-toggle').forEach(btn => {
   });
 });
 </script>
-
