@@ -14,7 +14,7 @@
             <button
               type="button"
               class="product-thumb{% if forloop.first %} is-active{% endif %}"
-              data-media-src="{{ media.src }}"
+              data-media-src="{{ media | image_url: width: 800 }}"
             >
               <img src="{{ media | image_url: width: 120 }}" alt="{{ product.title | escape }}" />
             </button>
@@ -209,10 +209,19 @@
       </div>
     </div>
 
-    <div class="buy-box-stock" id="StockBox" data-initial="true">
-    Loading stock…
-    </div>
+    {% assign v = product.selected_or_first_available_variant %}
 
+    <div class="buy-box-stock" id="StockBox">
+      {% if v.inventory_management == 'shopify' %}
+        {% if v.inventory_quantity > 0 %}
+          In stock
+        {% else %}
+          Out of stock
+        {% endif %}
+      {% else %}
+        In stock
+      {% endif %}
+    </div>
 
     {% form 'product', product, id: 'ProductForm' %}
       <input type="hidden" name="id" value="{{ v.id }}">
@@ -279,25 +288,13 @@
   <div class="image-gallery-content">
     <button class="image-gallery-close" id="ImageGalleryClose">×</button>
 
-    <h2 class="image-gallery-title">{{ product.title }}</h2>
-
-    <div class="image-gallery-main">
-      {% assign first = product.media.first %}
-      <img id="GalleryMainImage" src="{{ first | image_url: width: 800 }}" alt="{{ product.title }}">
-    </div>
-
     <div class="image-gallery-grid">
       {% for media in product.media %}
-        <img
-          src="{{ media | image_url: width: 200 }}"
-          class="image-gallery-item"
-          data-full="{{ media.src }}"
-        >
+        <img src="{{ media | image_url: width: 800 }}" class="image-gallery-item" alt="{{ product.title | escape }}">
       {% endfor %}
     </div>
   </div>
 </div>
-
 
 
 
@@ -327,14 +324,6 @@ document.addEventListener("DOMContentLoaded", function() {
   var selectedSizeText = document.getElementById("SelectedSize");
   var productForm = document.getElementById("ProductForm");
   var variantIdInput = productForm ? productForm.querySelector('input[name="id"]') : null;
-  var galleryItems = document.querySelectorAll(".image-gallery-item");
-  var galleryMain = document.getElementById("GalleryMainImage");
-  galleryItems.forEach(function(img) {
-    img.addEventListener("click", function() {
-        var full = img.dataset.full;
-        if (full) galleryMain.src = full;
-     });
-    });
 
   function setActiveImage(newSrc) {
     if (!mainImg || !newSrc) return;
@@ -404,30 +393,27 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     if (stockBoxEl) {
-        stockBoxEl.dataset.initial = "false";
-        if (variant.inventory_management === "shopify") {
-            if (variant.inventory_quantity > 0) {
-                stockBoxEl.textContent = "In stock";
-                stockBoxEl.style.color = "#16a34a";
-                } else {
-                    stockBoxEl.textContent = "Out of stock";
-                    stockBoxEl.style.color = "#dc2626";
-                    }
-                    } else {
-                        stockBoxEl.textContent = "In stock";
-                        stockBoxEl.style.color = "#16a34a";
-                        }
-                    }
-
+      if (variant.inventory_management === "shopify") {
+        if (variant.inventory_quantity > 0) {
+          stockBoxEl.textContent = "In stock";
+          stockBoxEl.style.color = "#16a34a";
+        } else {
+          stockBoxEl.textContent = "Out of stock";
+          stockBoxEl.style.color = "#dc2626";
+        }
+      } else {
+        stockBoxEl.textContent = "In stock";
+        stockBoxEl.style.color = "#16a34a";
+      }
+    }
 
     if (buyNowBtn) {
       buyNowBtn.disabled = !variant.available;
       buyNowBtn.dataset.variantId = variant.id;
     }
 
-    if (variant.featured_media) {
-        var cleanSrc = variant.featured_media.preview_image.src.replace(/(_\d+x\d+)?\.(jpg|png|jpeg|webp)/i, '.$2');
-        setActiveImage(cleanSrc);
+    if (variant.featured_media && variant.featured_media.preview_image && variant.featured_media.preview_image.src) {
+      setActiveImage(variant.featured_media.preview_image.src);
     } else if (selectedOptions.length && colorButtons.length) {
       var currentColor = selectedOptions[0];
       var colorBtn = Array.prototype.find.call(colorButtons, function(b) {
