@@ -27,21 +27,26 @@
 
     <!-- MAIN IMAGE -->
     <div class="product-gallery-main">
-      <div class="product-main-image-wrapper">
-        {% if product.media.size > 0 %}
-          {% assign first = product.media.first %}
-          {{ first | image_url: width: 800 | image_tag:
-              class: 'product-main-image',
-              id: 'MainImage'
-          }}
-        {% else %}
-          <img id="MainImage"
-               class="product-main-image"
-               src="{{ product.featured_image | img_url: '800x' }}"
-               alt="{{ product.title }}">
-        {% endif %}
-      </div>
-    </div>
+  <div class="product-main-image-wrapper">
+    {% if product.media.size > 0 %}
+      {% assign first = product.media.first %}
+      <img
+        id="MainImage"
+        class="product-main-image"
+        src="{{ first | image_url: width: 800 }}"
+        alt="{{ product.title }}"
+      >
+    {% else %}
+      <img
+        id="MainImage"
+        class="product-main-image"
+        src="{{ product.featured_image | img_url: '800x' }}"
+        alt="{{ product.title }}"
+      >
+    {% endif %}
+  </div>
+</div>
+
 
   </div> <!-- END LEFT COLUMN -->
 
