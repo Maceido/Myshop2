@@ -3,50 +3,56 @@
   <!-- LEFT: Gallery with only side thumbnails -->
   <div class="product-gallery">
 
-    <!-- SIDE THUMBNAILS -->
     {% assign total_media = product.media.size %}
     {% assign max_thumbs = 5 %}
 
-    <div class="product-gallery-side" id="SideThumbs">
-      {% for media in product.media %}
-        {% if forloop.index0 < max_thumbs %}
-          <button type="button"
-            class="product-thumb{% if forloop.first %} is-active{% endif %}"
-            data-media-src="{{ media | image_url: width: 800 }}"
-          >
-            <img src="{{ media | image_url: width: 120 }}" alt="" />
-          </button>
-        {% elsif forloop.index0 == max_thumbs %}
-          <button type="button" class="product-thumb product-thumb-more" data-more="true">
-            +{{ total_media | minus: max_thumbs }}
-          </button>
-          {% break %}
-        {% endif %}
-      {% endfor %}
-    </div>
+    <!-- SIDE THUMBNAILS -->
+    {% if total_media > 0 %}
+      <div class="product-gallery-side" id="SideThumbs">
+        {% for media in product.media %}
+          {% if forloop.index0 < max_thumbs %}
+            <button
+              type="button"
+              class="product-thumb{% if forloop.first %} is-active{% endif %}"
+              data-media-src="{{ media | image_url: width: 800 }}"
+            >
+              <img src="{{ media | image_url: width: 120 }}" alt="{{ product.title | escape }}" />
+            </button>
+          {% elsif forloop.index0 == max_thumbs %}
+            <button
+              type="button"
+              class="product-thumb product-thumb-more"
+              data-more="true"
+            >
+              +{{ total_media | minus: max_thumbs }}
+            </button>
+            {% break %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
 
     <!-- MAIN IMAGE -->
     <div class="product-gallery-main">
-  <div class="product-main-image-wrapper">
-    {% if product.media.size > 0 %}
-      {% assign first = product.media.first %}
-      <img
-        id="MainImage"
-        class="product-main-image"
-        src="{{ first | image_url: width: 800 }}"
-        alt="{{ product.title }}"
-      >
-    {% else %}
-      <img
-        id="MainImage"
-        class="product-main-image"
-        src="{{ product.featured_image | img_url: '800x' }}"
-        alt="{{ product.title }}"
-      >
-    {% endif %}
-  </div>
-</div>
-
+      <div class="product-main-image-wrapper">
+        {% if product.media.size > 0 %}
+          {% assign first = product.media.first %}
+          <img
+            id="MainImage"
+            class="product-main-image"
+            src="{{ first | image_url: width: 800 }}"
+            alt="{{ product.title | escape }}"
+          >
+        {% elsif product.featured_image %}
+          <img
+            id="MainImage"
+            class="product-main-image"
+            src="{{ product.featured_image | img_url: '800x' }}"
+            alt="{{ product.title | escape }}"
+          >
+        {% endif %}
+      </div>
+    </div>
 
   </div> <!-- END LEFT COLUMN -->
 
@@ -69,9 +75,13 @@
 
     <div class="product-selector">
 
-      <!-- COLOR SECTION -->
+      {%- comment -%}
+        COLOR SECTION - first option treated as color
+        We keep label as "Color" to avoid Element 1, Option 2 nonsense.
+      {%- endcomment -%}
       {% if option_count >= 1 %}
         {% assign color_opt = product.options_with_values[0] %}
+
         <div class="selector-block">
           <div class="selector-label-row">
             <div class="selector-label">
@@ -91,14 +101,15 @@
                 {% endif %}
               {% endfor %}
 
-              <button type="button"
+              <button
+                type="button"
                 class="color-swatch{% if color_opt.selected_value == value %} is-active{% endif %}"
                 data-option-index="0"
                 data-option-value="{{ value | escape }}"
-                data-media-src="{{ varimg }}"
+                {% if varimg %}data-media-src="{{ varimg }}"{% endif %}
               >
                 {% if varimg %}
-                  <img src="{{ varimg | img_url: '120x' }}" />
+                  <img src="{{ varimg | img_url: '120x' }}" alt="{{ value | escape }}" />
                 {% endif %}
                 <span class="color-swatch-name">{{ value }}</span>
               </button>
@@ -109,11 +120,13 @@
 
 
 
-      <!-- SIZE SECTION -->
+      {%- comment -%}
+        SIZE SECTION - second option as size if it exists
+      {%- endcomment -%}
+      {% assign size_opt = blank %}
+
       {% if option_count >= 2 %}
         {% assign size_opt = product.options_with_values[1] %}
-      {% else %}
-        {% assign size_opt = blank %}
       {% endif %}
 
       {% if size_opt %}
@@ -123,15 +136,19 @@
               Size:
               <span id="SelectedSize">{{ size_opt.selected_value }}</span>
             </div>
-            <button type="button" class="size-chart-link" id="SizeChartButton">Size chart</button>
+            <button type="button" class="size-chart-link" id="SizeChartButton">
+              Size chart
+            </button>
           </div>
 
           <div class="size-pill-grid">
             {% for value in size_opt.values %}
-              <button type="button"
+              <button
+                type="button"
                 class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
                 data-option-index="1"
-                data-option-value="{{ value }}">
+                data-option-value="{{ value | escape }}"
+              >
                 {{ value }}
               </button>
             {% endfor %}
@@ -143,11 +160,11 @@
 
 
 
-    <!-- PRODUCT DETAILS -->
+    <!-- PRODUCT DETAILS, TEXT ONLY, NO IMAGES -->
     <div class="product-details-section">
       <h3>Product details</h3>
       <div class="product-details-content">
-        {{ product.description }}
+        {{ product.description | strip_html }}
       </div>
     </div>
 
@@ -156,11 +173,11 @@
       <p>{{ product.title }} with multiple styles and sizes available.</p>
     </div>
 
-  </div> <!-- END MIDDLE -->
+  </div> <!-- END MIDDLE COLUMN -->
 
 
 
-  <!-- BUY BOX -->
+  <!-- RIGHT: BUY BOX -->
   <div class="product-buy-box">
 
     <div class="buy-box-price" id="BuyBoxPrice">
@@ -168,7 +185,21 @@
     </div>
 
     <div class="buy-box-delivery">
-      Delivery time shown at checkout
+      {% if product.metafields.shipping.estimated_min_days or product.metafields.shipping.estimated_max_days %}
+        <div
+          id="BuyBoxDeliveryDate"
+          data-min-days="{{ product.metafields.shipping.estimated_min_days }}"
+          data-max-days="{{ product.metafields.shipping.estimated_max_days }}"
+        >
+          Estimated delivery:
+          <span class="delivery-date-value"></span>
+        </div>
+      {% else %}
+        <div class="buy-box-delivery-note">
+          Delivery time shown at checkout
+        </div>
+      {% endif %}
+
       <div class="buy-box-location">
         {% if customer and customer.default_address %}
           Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
@@ -178,31 +209,63 @@
       </div>
     </div>
 
+    {% assign v = product.selected_or_first_available_variant %}
+
     <div class="buy-box-stock" id="StockBox">
-      {% if product.selected_or_first_available_variant.available %}
-        In stock
+      {% if v.inventory_management == 'shopify' %}
+        {% if v.inventory_quantity > 0 %}
+          In stock
+        {% else %}
+          Out of stock
+        {% endif %}
       {% else %}
-        Out of stock
+        In stock
       {% endif %}
     </div>
 
-
     {% form 'product', product, id: 'ProductForm' %}
-      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+      <input type="hidden" name="id" value="{{ v.id }}">
 
       <div class="buy-box-quantity">
-        <label>Quantity:</label>
+        <label for="QtySelect">Quantity:</label>
         <select id="QtySelect" name="quantity"></select>
       </div>
 
       <div class="buy-box-actions">
-        <button class="btn btn-primary" type="submit">Add to Cart</button>
-        <button class="btn btn-outline" type="button" id="BuyNowBtn">Buy Now</button>
+        <button class="btn btn-primary" type="submit">
+          Add to Cart
+        </button>
+        <button
+          class="btn btn-outline"
+          type="button"
+          id="BuyNowBtn"
+          {% unless product.available %}disabled{% endunless %}
+        >
+          Buy Now
+        </button>
       </div>
 
     {% endform %}
 
-  </div>
+    <div class="buy-box-meta">
+      {% if product.metafields.shipping.ships_from %}
+        <div><strong>Ships from</strong> {{ product.metafields.shipping.ships_from }}</div>
+      {% endif %}
+
+      {% if product.metafields.shipping.seller_name %}
+        <div><strong>Sold by</strong> {{ product.metafields.shipping.seller_name }}</div>
+      {% endif %}
+
+      {% if product.metafields.policies.returns_label %}
+        <div><strong>Returns</strong> {{ product.metafields.policies.returns_label }}</div>
+      {% endif %}
+
+      {% if product.metafields.policies.payment_label %}
+        <div><strong>Payment</strong> {{ product.metafields.policies.payment_label }}</div>
+      {% endif %}
+    </div>
+
+  </div> <!-- END BUY BOX -->
 
 </section>
 
@@ -218,80 +281,270 @@
   </div>
 </div>
 
+<!-- IMAGE GALLERY MODAL FOR 5+ IMAGES -->
+<div class="image-gallery-modal" id="ImageGalleryModal">
+  <div class="image-gallery-backdrop"></div>
+
+  <div class="image-gallery-content">
+    <button class="image-gallery-close" id="ImageGalleryClose">×</button>
+
+    <div class="image-gallery-grid">
+      {% for media in product.media %}
+        <img src="{{ media | image_url: width: 800 }}" class="image-gallery-item" alt="{{ product.title | escape }}">
+      {% endfor %}
+    </div>
+  </div>
+</div>
 
 
-<!-- JS FOR IMAGE SWAPPING & VARIANT LOGIC -->
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const product = {{ product | json }};
-  let selectedOptions = product.variants[0].options.slice();
+document.addEventListener("DOMContentLoaded", function() {
+  var productData = {{ product | json }};
+  if (!productData || !productData.variants || !productData.variants.length) return;
 
-  const mainImg = document.getElementById("MainImage");
-  const thumbs = document.querySelectorAll(".product-thumb:not([data-more])");
-  const colorButtons = document.querySelectorAll(".color-swatch");
-  const sizeButtons = document.querySelectorAll(".size-pill");
+  var initialVariantId = {{ product.selected_or_first_available_variant.id }};
+  var initialVariant = productData.variants.find(function(v) { return v.id === initialVariantId; }) || productData.variants[0];
+
+  var selectedOptions = initialVariant.options.slice();
+
+  var mainImg = document.getElementById("MainImage");
+  var thumbs = document.querySelectorAll("#SideThumbs .product-thumb:not(.product-thumb-more)");
+  var moreBtn = document.querySelector(".product-thumb-more");
+
+  var colorButtons = document.querySelectorAll(".color-swatch");
+  var sizeButtons = document.querySelectorAll(".size-pill");
+
+  var priceMainEl = document.getElementById("PriceMain");
+  var priceBoxEl = document.getElementById("BuyBoxPrice");
+  var stockBoxEl = document.getElementById("StockBox");
+  var qtySelect = document.getElementById("QtySelect");
+  var buyNowBtn = document.getElementById("BuyNowBtn");
+  var selectedColorText = document.getElementById("SelectedColor");
+  var selectedSizeText = document.getElementById("SelectedSize");
+  var productForm = document.getElementById("ProductForm");
+  var variantIdInput = productForm ? productForm.querySelector('input[name="id"]') : null;
 
   function setActiveImage(newSrc) {
-    if (!newSrc) return;
+    if (!mainImg || !newSrc) return;
 
-    const oldSrc = mainImg.src;
     mainImg.src = newSrc;
+    mainImg.removeAttribute("srcset");
+    mainImg.removeAttribute("sizes");
 
-    thumbs.forEach(btn => {
+    thumbs.forEach(function(btn) {
       btn.classList.toggle("is-active", btn.dataset.mediaSrc === newSrc);
     });
+  }
 
-    let exists = false;
-    thumbs.forEach(btn => {
-      if (btn.dataset.mediaSrc === oldSrc) exists = true;
-    });
+  function syncQuantitySelect(variant) {
+    if (!qtySelect) return;
 
-    if (!exists) {
-      const last = thumbs[thumbs.length - 1];
-      last.dataset.mediaSrc = oldSrc;
-      last.querySelector("img").src = oldSrc;
+    var maxQty = 50;
+
+    if (variant && variant.inventory_management === "shopify" && typeof variant.inventory_quantity === "number") {
+      maxQty = variant.inventory_quantity;
+      if (maxQty < 1) maxQty = 1;
+      if (maxQty > 50) maxQty = 50;
+    }
+
+    var current = parseInt(qtySelect.value || "1", 10);
+    qtySelect.innerHTML = "";
+
+    for (var i = 1; i <= maxQty; i++) {
+      var opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = i;
+      if (i === current) opt.selected = true;
+      qtySelect.appendChild(opt);
     }
   }
 
-  // clicking thumbnails
-  thumbs.forEach(btn => {
-    btn.addEventListener("click", () => {
-      setActiveImage(btn.dataset.mediaSrc);
+  function findVariant() {
+    if (!selectedOptions || !selectedOptions.length) return initialVariant;
+
+    var found = productData.variants.find(function(v) {
+      return JSON.stringify(v.options) === JSON.stringify(selectedOptions);
     });
-  });
 
-  // clicking color swatches
-  colorButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const idx = btn.dataset.optionIndex;
-      const val = btn.dataset.optionValue;
+    return found || initialVariant;
+  }
 
-      colorButtons.forEach(b => b.classList.remove("is-active"));
-      btn.classList.add("is-active");
+  function updateVariant() {
+    var variant = findVariant();
+    if (!variant) return;
 
-      document.getElementById("SelectedColor").textContent = val;
-      selectedOptions[idx] = val;
+    if (variantIdInput) {
+      variantIdInput.value = variant.id;
+    }
 
-      const variant = product.variants.find(v => JSON.stringify(v.options) === JSON.stringify(selectedOptions));
-      if (variant && variant.featured_media) {
-        setActiveImage(variant.featured_media.preview_image.src);
+    if (priceMainEl) {
+      priceMainEl.textContent = Shopify.formatMoney(
+        variant.price,
+        "{{ shop.money_format | escape }}"
+      );
+    }
+
+    if (priceBoxEl) {
+      priceBoxEl.textContent = Shopify.formatMoney(
+        variant.price,
+        "{{ shop.money_format | escape }}"
+      );
+    }
+
+    if (stockBoxEl) {
+      if (variant.inventory_management === "shopify") {
+        if (variant.inventory_quantity > 0) {
+          stockBoxEl.textContent = "In stock";
+          stockBoxEl.style.color = "#16a34a";
+        } else {
+          stockBoxEl.textContent = "Out of stock";
+          stockBoxEl.style.color = "#dc2626";
+        }
+      } else {
+        stockBoxEl.textContent = "In stock";
+        stockBoxEl.style.color = "#16a34a";
       }
+    }
+
+    if (buyNowBtn) {
+      buyNowBtn.disabled = !variant.available;
+      buyNowBtn.dataset.variantId = variant.id;
+    }
+
+    if (variant.featured_media && variant.featured_media.preview_image && variant.featured_media.preview_image.src) {
+      setActiveImage(variant.featured_media.preview_image.src);
+    } else if (selectedOptions.length && colorButtons.length) {
+      var currentColor = selectedOptions[0];
+      var colorBtn = Array.prototype.find.call(colorButtons, function(b) {
+        return b.dataset.optionValue === currentColor && b.dataset.mediaSrc;
+      });
+      if (colorBtn && colorBtn.dataset.mediaSrc) {
+        setActiveImage(colorBtn.dataset.mediaSrc);
+      }
+    }
+
+    syncQuantitySelect(variant);
+  }
+
+  thumbs.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var src = btn.getAttribute("data-media-src");
+      setActiveImage(src);
     });
   });
 
-  // clicking size pills
-  sizeButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const idx = btn.dataset.optionIndex;
-      const val = btn.dataset.optionValue;
+  colorButtons.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var idx = parseInt(btn.dataset.optionIndex, 10);
+      var val = btn.dataset.optionValue;
 
-      sizeButtons.forEach(b => b.classList.remove("is-active"));
+      colorButtons.forEach(function(b) { b.classList.remove("is-active"); });
       btn.classList.add("is-active");
 
-      document.getElementById("SelectedSize").textContent = val;
+      if (selectedColorText) selectedColorText.textContent = val;
       selectedOptions[idx] = val;
+
+      updateVariant();
     });
   });
 
+  sizeButtons.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var idx = parseInt(btn.dataset.optionIndex, 10);
+      var val = btn.dataset.optionValue;
+
+      sizeButtons.forEach(function(b) { b.classList.remove("is-active"); });
+      btn.classList.add("is-active");
+
+      if (selectedSizeText) selectedSizeText.textContent = val;
+      selectedOptions[idx] = val;
+
+      updateVariant();
+    });
+  });
+
+  if (buyNowBtn && qtySelect) {
+    buyNowBtn.addEventListener("click", function() {
+      var variantId = buyNowBtn.dataset.variantId || initialVariant.id;
+      var qty = qtySelect.value || 1;
+      if (!variantId) return;
+      window.location.href = "/cart/" + variantId + ":" + qty + "?checkout=true";
+    });
+  }
+
+  var sizeChartBtn = document.getElementById("SizeChartButton");
+  var sizeChartModal = document.getElementById("SizeChartModal");
+  var sizeChartClose = document.getElementById("SizeChartClose");
+
+  if (sizeChartBtn && sizeChartModal) {
+    sizeChartBtn.addEventListener("click", function() {
+      sizeChartModal.classList.add("is-open");
+    });
+  }
+
+  if (sizeChartClose && sizeChartModal) {
+    sizeChartClose.addEventListener("click", function() {
+      sizeChartModal.classList.remove("is-open");
+    });
+  }
+
+  if (sizeChartModal) {
+    var backdrop = sizeChartModal.querySelector(".size-chart-backdrop");
+    if (backdrop) {
+      backdrop.addEventListener("click", function() {
+        sizeChartModal.classList.remove("is-open");
+      });
+    }
+  }
+
+  var galleryModal = document.getElementById("ImageGalleryModal");
+  var galleryClose = document.getElementById("ImageGalleryClose");
+  var galleryBackdrop = document.querySelector(".image-gallery-backdrop");
+
+  if (moreBtn && galleryModal) {
+    moreBtn.addEventListener("click", function() {
+      galleryModal.classList.add("is-open");
+    });
+  }
+
+  if (galleryClose && galleryModal) {
+    galleryClose.addEventListener("click", function() {
+      galleryModal.classList.remove("is-open");
+    });
+  }
+
+  if (galleryBackdrop && galleryModal) {
+    galleryBackdrop.addEventListener("click", function() {
+      galleryModal.classList.remove("is-open");
+    });
+  }
+
+  var deliveryEl = document.getElementById("BuyBoxDeliveryDate");
+  if (deliveryEl) {
+    var minDays = parseInt(deliveryEl.dataset.minDays || "0", 10);
+    var maxDays = parseInt(deliveryEl.dataset.maxDays || "0", 10);
+    var span = deliveryEl.querySelector(".delivery-date-value");
+    if (span && (minDays > 0 || maxDays > 0)) {
+      var now = new Date();
+      var options = { month: "long", day: "numeric" };
+
+      var minDate = minDays > 0 ? new Date(now.getTime() + minDays * 86400000) : null;
+      var maxDate = maxDays > 0 ? new Date(now.getTime() + maxDays * 86400000) : null;
+
+      if (minDate && maxDate) {
+        span.textContent =
+          minDate.toLocaleDateString("en-US", options) +
+          " - " +
+          maxDate.toLocaleDateString("en-US", options);
+      } else if (maxDate) {
+        span.textContent = maxDate.toLocaleDateString("en-US", options);
+      } else if (minDate) {
+        span.textContent = minDate.toLocaleDateString("en-US", options);
+      }
+    }
+  }
+
+  updateVariant();
 });
 </script>
