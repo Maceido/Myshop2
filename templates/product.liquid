@@ -1,30 +1,63 @@
 <section class="product-page">
 
-  <!-- LEFT: Image gallery -->
+  <!-- LEFT: Gallery with side thumbs -->
   <div class="product-gallery">
+    {% assign total_media = product.media.size %}
+    {% assign max_side_thumbs = 5 %}
+
+    <!-- Vertical thumbs on the side -->
+    {% if total_media > 0 %}
+      <div class="product-gallery-side" id="ProductSideThumbs">
+        {% for media in product.media %}
+          {% if forloop.index0 < max_side_thumbs and forloop.index0 < total_media %}
+            <button
+              type="button"
+              class="product-thumb{% if forloop.first %} is-active{% endif %}"
+              data-media-src="{{ media | image_url: width: 800 }}"
+            >
+              {{ media | media_tag: image_size: '80x' }}
+            </button>
+          {% elsif forloop.index0 == max_side_thumbs and total_media > max_side_thumbs %}
+            <button
+              type="button"
+              class="product-thumb product-thumb-more"
+              data-more-thumbs="true"
+            >
+              +{{ total_media | minus: max_side_thumbs }} more
+            </button>
+            {% break %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Main image with fixed height container -->
     <div class="product-gallery-main">
-      {% if product.media.size > 0 %}
-        {% assign first_media = product.media.first %}
-        {{ first_media | media_tag: image_size: '800x', class: 'product-main-image', id: 'ProductMainImage' }}
-      {% elsif product.featured_image %}
-        <img
-          id="ProductMainImage"
-          class="product-main-image"
-          src="{{ product.featured_image | img_url: '800x' }}"
-          alt="{{ product.title }}"
-        >
-      {% endif %}
+      <div class="product-main-image-wrapper">
+        {% if product.media.size > 0 %}
+          {% assign first_media = product.media.first %}
+          {{ first_media | media_tag: image_size: '800x', class: 'product-main-image', id: 'ProductMainImage' }}
+        {% elsif product.featured_image %}
+          <img
+            id="ProductMainImage"
+            class="product-main-image"
+            src="{{ product.featured_image | img_url: '800x' }}"
+            alt="{{ product.title }}"
+          >
+        {% endif %}
+      </div>
     </div>
 
+    <!-- All thumbs under main image -->
     {% if product.media.size > 1 %}
       <div class="product-gallery-thumbs" id="ProductThumbs">
         {% for media in product.media %}
           <button
             type="button"
-            class="product-thumb{% if forloop.first %} is-active{% endif %}"
+            class="product-thumb-under{% if forloop.first %} is-active{% endif %}"
             data-media-src="{{ media | image_url: width: 800 }}"
           >
-            {{ media | media_tag: image_size: '120x' }}
+            {{ media | media_tag: image_size: '80x' }}
           </button>
         {% endfor %}
       </div>
@@ -34,16 +67,13 @@
 
   <!-- MIDDLE: Title, color, size, details -->
   <div class="product-main-info">
-    <div class="product-breadcrumb">
-      <!-- Optional: could add collection / category text here -->
-    </div>
-
     <h1 class="product-title">
       {{ product.title }}
     </h1>
 
     <div class="product-rating-placeholder">
-      ★★★★☆ <span>Amazon-style fake rating placeholder</span>
+      <!-- You can wire real reviews later -->
+      ★★★★☆ <span>Rating coming soon</span>
     </div>
 
     <div class="product-price-main" id="ProductPriceMain">
@@ -55,14 +85,25 @@
     <div class="product-selector">
 
       {%- comment -%}
-        COLOR SECTION (if product has 2+ options, treat first as Color)
+        COLOR SECTION (if there are at least 2 options, treat first as color).
+        We also sanitize the label so we don't show weird things like "Element".
       {%- endcomment -%}
       {% if option_count >= 2 %}
         {% assign color_option = product.options_with_values[0] %}
+        {% assign raw_color_label = color_option.name | default: 'Color' %}
+        {% assign color_label = raw_color_label %}
+        {% if raw_color_label contains 'Element' or raw_color_label contains 'Option' %}
+          {% assign color_label = 'Color' %}
+        {% endif %}
+
         <div class="selector-block">
-          <div class="selector-label">
-            {{ color_option.name }}
+          <div class="selector-label-row">
+            <div class="selector-label">
+              {{ color_label }}:
+              <span id="SelectedColorText">{{ color_option.selected_value }}</span>
+            </div>
           </div>
+
           <div class="color-swatch-grid">
             {% for value in color_option.values %}
               {%- assign swatch_image = blank -%}
@@ -91,7 +132,8 @@
 
       {%- comment -%}
         SIZE SECTION
-        If there are 2+ options, second is Size; if 1 option, treat that option as Size.
+        If 2+ options: second is size.
+        If only 1 option: treat that one as size, but don't print "Brown".
       {%- endcomment -%}
       {% if option_count >= 2 %}
         {% assign size_option = product.options_with_values[1] %}
@@ -103,12 +145,8 @@
         <div class="selector-block">
           <div class="selector-label-row">
             <div class="selector-label">
-              {% if option_count == 1 %}
-                Size
-              {% else %}
-                {{ size_option.name }}
-              {% endif %}
-              : <span id="SelectedSizeText">{{ size_option.selected_value }}</span>
+              Size:
+              <span id="SelectedSizeText">{{ size_option.selected_value }}</span>
             </div>
             <button type="button" class="size-chart-link" id="SizeChartButton">
               Size chart
@@ -132,23 +170,20 @@
 
     </div>
 
-    <!-- Product details & About this item -->
+    <!-- Product details: use actual description, structured later if you want -->
     <div class="product-details-section">
       <h3>Product details</h3>
-      <ul class="product-details-list">
-        <!-- You can wire these up to metafields later. Placeholder for now. -->
-        <li><strong>Fabric type:</strong> 95% Cotton, 5% Elastane (example)</li>
-        <li><strong>Care instructions:</strong> Machine wash, cold</li>
-        <li><strong>Origin:</strong> Imported</li>
-        <li><strong>Closure type:</strong> Pull on</li>
-      </ul>
+      <div class="product-details-content">
+        {{ product.description }}
+      </div>
     </div>
 
     <div class="product-about-section">
       <h3>About this item</h3>
-      <div class="product-description">
-        {{ product.description }}
-      </div>
+      <p>
+        <!-- You can later move bullet points or metafields here if you want a cleaner summary. -->
+        {{ product.title }} from {{ product.vendor }} with multiple styles and sizes available.
+      </p>
     </div>
   </div>
 
@@ -160,10 +195,21 @@
     </div>
 
     <div class="buy-box-delivery">
-      <div id="BuyBoxDeliveryDate">
-        Estimated delivery:
-        <span class="delivery-date-value"></span>
-      </div>
+      {% if product.metafields.shipping.estimated_min_days or product.metafields.shipping.estimated_max_days %}
+        <div
+          id="BuyBoxDeliveryDate"
+          data-min-days="{{ product.metafields.shipping.estimated_min_days }}"
+          data-max-days="{{ product.metafields.shipping.estimated_max_days }}"
+        >
+          Estimated delivery:
+          <span class="delivery-date-value"></span>
+        </div>
+      {% else %}
+        <div class="buy-box-delivery-note">
+          Delivery time shown at checkout
+        </div>
+      {% endif %}
+
       <div class="buy-box-location">
         {% if customer and customer.default_address %}
           Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
@@ -200,10 +246,21 @@
     {% endform %}
 
     <div class="buy-box-meta">
-      <div><strong>Ships from</strong> {{ shop.name }}</div>
-      <div><strong>Sold by</strong> {{ product.vendor }}</div>
-      <div><strong>Returns</strong> Returns available</div>
-      <div><strong>Payment</strong> Secure transaction</div>
+      {% if product.metafields.shipping.ships_from %}
+        <div><strong>Ships from</strong> {{ product.metafields.shipping.ships_from }}</div>
+      {% endif %}
+
+      {% if product.metafields.shipping.seller_name %}
+        <div><strong>Sold by</strong> {{ product.metafields.shipping.seller_name }}</div>
+      {% endif %}
+
+      {% if product.metafields.policies.returns_label %}
+        <div><strong>Returns</strong> {{ product.metafields.policies.returns_label }}</div>
+      {% endif %}
+
+      {% if product.metafields.policies.payment_label %}
+        <div><strong>Payment</strong> {{ product.metafields.policies.payment_label }}</div>
+      {% endif %}
     </div>
   </div>
 </section>
@@ -211,7 +268,7 @@
 
 {%- comment -%}
   SIZE CHART MODAL
-  Upload an image called "size-chart.png" to assets for this to work.
+  Upload an image called "size-chart.png" to assets, or change the file name.
 {%- endcomment -%}
 <div class="size-chart-modal" id="SizeChartModal">
   <div class="size-chart-backdrop"></div>
@@ -228,24 +285,48 @@
     var productData = {{ product | json }};
     var optionCount = productData.options ? productData.options.length : 0;
 
-    // --- IMAGE THUMBS ---
     var mainImageEl = document.getElementById('ProductMainImage');
-    var thumbs = document.querySelectorAll('.product-thumb');
-    thumbs.forEach(function(btn) {
+    var sideThumbs = document.querySelectorAll('#ProductSideThumbs .product-thumb');
+    var underThumbs = document.querySelectorAll('#ProductThumbs .product-thumb-under');
+
+    function setActiveImage(src) {
+      if (!mainImageEl || !src) return;
+      mainImageEl.src = src;
+
+      sideThumbs.forEach(function(btn) {
+        var bsrc = btn.getAttribute('data-media-src');
+        btn.classList.toggle('is-active', bsrc === src);
+      });
+
+      underThumbs.forEach(function(btn) {
+        var bsrc = btn.getAttribute('data-media-src');
+        btn.classList.toggle('is-active', bsrc === src);
+      });
+    }
+
+    sideThumbs.forEach(function(btn) {
+      if (btn.dataset.moreThumbs === 'true') return;
       btn.addEventListener('click', function() {
         var src = btn.getAttribute('data-media-src');
-        if (src && mainImageEl) {
-          mainImageEl.src = src;
-          thumbs.forEach(function(b) { b.classList.remove('is-active'); });
-          btn.classList.add('is-active');
-        }
+        setActiveImage(src);
       });
     });
 
-    // --- SELECTED OPTIONS STATE ---
-    var selectedOptions = [];
-    if (productData.variants && productData.variants.length > 0) {
-      selectedOptions = productData.variants[0].options.slice();
+    underThumbs.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var src = btn.getAttribute('data-media-src');
+        setActiveImage(src);
+      });
+    });
+
+    var moreThumbBtn = document.querySelector('.product-thumb-more');
+    if (moreThumbBtn) {
+      moreThumbBtn.addEventListener('click', function() {
+        var thumbsContainer = document.getElementById('ProductThumbs');
+        if (thumbsContainer) {
+          thumbsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
     }
 
     var priceMainEl = document.getElementById('ProductPriceMain');
@@ -253,11 +334,15 @@
     var stockBoxEl = document.getElementById('BuyBoxStock');
     var buyNowBtn = document.getElementById('BuyBoxBuyNow');
     var sizeTextEl = document.getElementById('SelectedSizeText');
-
+    var colorTextEl = document.getElementById('SelectedColorText');
     var buyForm = document.getElementById('product-buy-form');
     var buyFormIdInput = buyForm ? buyForm.querySelector('input[name="id"]') : null;
-
     var quantitySelect = document.getElementById('BuyBoxQuantity');
+
+    var selectedOptions = [];
+    if (productData.variants && productData.variants.length > 0) {
+      selectedOptions = productData.variants[0].options.slice();
+    }
 
     function syncQuantitySelect(variant) {
       if (!quantitySelect) return;
@@ -324,14 +409,14 @@
         buyNowBtn.dataset.variantId = variant.id;
       }
 
-      if (variant.featured_media && variant.featured_media.preview_image && variant.featured_media.preview_image.src && mainImageEl) {
-        mainImageEl.src = variant.featured_media.preview_image.src;
+      if (variant.featured_media && variant.featured_media.preview_image && variant.featured_media.preview_image.src) {
+        var variantSrc = variant.featured_media.preview_image.src;
+        setActiveImage(variantSrc);
       }
 
       syncQuantitySelect(variant);
     }
 
-    // COLOR + SIZE BUTTON HANDLERS
     document.addEventListener('click', function(e) {
       var colorBtn = e.target.closest('.color-swatch');
       var sizeBtn = e.target.closest('.size-pill');
@@ -346,6 +431,8 @@
           b.classList.remove('is-active');
         });
         colorBtn.classList.add('is-active');
+
+        if (colorTextEl) colorTextEl.textContent = val;
 
         updateVariant();
         return;
@@ -369,7 +456,6 @@
       }
     });
 
-    // BUY NOW
     if (buyNowBtn && quantitySelect) {
       buyNowBtn.addEventListener('click', function() {
         var variantId = buyNowBtn.dataset.variantId;
@@ -379,7 +465,6 @@
       });
     }
 
-    // SIZE CHART MODAL
     var sizeChartBtn = document.getElementById('SizeChartButton');
     var sizeChartModal = document.getElementById('SizeChartModal');
     var sizeChartClose = document.getElementById('SizeChartClose');
@@ -405,16 +490,31 @@
       }
     }
 
-    // ESTIMATED DELIVERY DATE (simple +7 days)
-    var deliverySpan = document.querySelector('.delivery-date-value');
-    if (deliverySpan) {
-      var d = new Date();
-      d.setDate(d.getDate() + 7);
-      var opts = { month: 'long', day: 'numeric' };
-      deliverySpan.textContent = d.toLocaleDateString('en-US', opts);
+    var deliveryEl = document.getElementById('BuyBoxDeliveryDate');
+    if (deliveryEl) {
+      var minDays = parseInt(deliveryEl.dataset.minDays || '0', 10);
+      var maxDays = parseInt(deliveryEl.dataset.maxDays || '0', 10);
+      var span = deliveryEl.querySelector('.delivery-date-value');
+      if (span && (minDays > 0 || maxDays > 0)) {
+        var now = new Date();
+        var options = { month: 'long', day: 'numeric' };
+
+        var minDate = minDays > 0 ? new Date(now.getTime() + minDays * 86400000) : null;
+        var maxDate = maxDays > 0 ? new Date(now.getTime() + maxDays * 86400000) : null;
+
+        if (minDate && maxDate) {
+          span.textContent =
+            minDate.toLocaleDateString('en-US', options) +
+            ' - ' +
+            maxDate.toLocaleDateString('en-US', options);
+        } else if (maxDate) {
+          span.textContent = maxDate.toLocaleDateString('en-US', options);
+        } else if (minDate) {
+          span.textContent = minDate.toLocaleDateString('en-US', options);
+        }
+      }
     }
 
-    // INITIAL SYNC
     updateVariant();
   })();
 </script>
