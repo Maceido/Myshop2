@@ -161,9 +161,14 @@
 <!-- FULLSCREEN GALLERY -->
 <div class="image-gallery-modal" id="ImageGalleryModal">
   <div class="image-gallery-backdrop"></div>
+
   <div class="image-gallery-content">
     <button id="ImageGalleryClose" class="image-gallery-close">×</button>
-    <div class="image-gallery-carousel" id="ImageGalleryCarousel"></div>
+
+    <div class="image-gallery-grid" id="ImageGalleryGrid">
+      <!-- JS fills these -->
+    </div>
+
   </div>
 </div>
 
@@ -235,23 +240,35 @@ document.addEventListener("DOMContentLoaded", function() {
 
   setupThumbnailClicks();
 
-  /* ========= FULLSCREEN GALLERY ========= */
-  function openFullGallery() {
+    /* -------------------------------
+    FULLSCREEN POPUP GALLERY FIX
+    ------------------------------- */
 
-    galleryContent.innerHTML = "";
+    const galleryModal = document.getElementById("ImageGalleryModal");
+    const galleryGrid = document.getElementById("ImageGalleryGrid");
+    const galleryClose = document.getElementById("ImageGalleryClose");
+    const galleryBackdrop = document.querySelector(".image-gallery-backdrop");
+
+    function openPopupGallery() {
+    galleryGrid.innerHTML = "";
 
     product.media.forEach(m => {
-      const img = document.createElement("img");
-      img.src = clean(m.src);
-      img.className = "gallery-big-image";
-      galleryContent.appendChild(img);
+        const img = document.createElement("img");
+        img.src = m.src;
+        img.className = "image-gallery-item";
+        galleryGrid.appendChild(img);
     });
 
     galleryModal.classList.add("is-open");
-  }
+    }
 
-  if (galleryClose) galleryClose.onclick = () => galleryModal.classList.remove("is-open");
-  if (galleryBackdrop) galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
+    document.querySelectorAll(".product-thumb-more").forEach(btn => {
+    btn.onclick = openPopupGallery;
+    });
+
+    if (galleryClose) galleryClose.onclick = () => galleryModal.classList.remove("is-open");
+    if (galleryBackdrop) galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
+
 
   /* ========= COLOR SWITCHING WITH VARIANT UPDATE ========= */
   document.querySelectorAll(".color-swatch").forEach(btn => {
