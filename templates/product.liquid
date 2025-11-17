@@ -99,37 +99,40 @@
       {% endif %}
 
       <!-- SIZE OPTION -->
-      {% if size_opt %}
-        <div class="selector-block">
+    {% if option_count >= 2 %}
+    {% assign size_opt = product.options_with_values[1] %}
+    {% else %}
+    {% assign size_opt = blank %}
+    {% endif %}
 
-
-      {% if size_opt %}
-        <div class="selector-block">
-          <div class="selector-label-row">
-            <div class="selector-label">
-              Size:
-              <span id="SelectedSize">{{ size_opt.selected_value }}</span>
-            </div>
-            <button type="button" class="size-chart-link" id="SizeChartButton">Size chart</button>
-          </div>
-
-          <div class="size-pill-grid">
-            {% for value in size_opt.values %}
-              <button
-                type="button"
-                class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
-                data-option-index="1"
-                data-option-value="{{ value }}"
-              >
-                {{ value }}
-              </button>
-            {% endfor %}
-          </div>
-
+    {% if size_opt %}
+    <div class="selector-block">
+        <div class="selector-label-row">
+        <div class="selector-label">
+            Size:
+            <span id="SelectedSize">{{ size_opt.selected_value }}</span>
         </div>
-      {% endif %}
 
+        <button type="button" class="size-chart-link" id="SizeChartButton">
+            Size chart
+        </button>
+        </div>
+
+        <div class="size-pill-grid">
+        {% for value in size_opt.values %}
+            <button
+            type="button"
+            class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
+            data-option-index="1"
+            data-option-value="{{ value }}"
+            >
+            {{ value }}
+            </button>
+        {% endfor %}
+        </div>
     </div>
+    {% endif %}
+
 
 
     <!-- PRODUCT DETAILS (NO IMAGES ALLOWED) -->
