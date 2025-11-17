@@ -372,7 +372,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Now re-render the side thumbs for the variant
-        renderThumbs(variant);
+                renderThumbs(variant);
+      });
     });
-});
+
+    // INITIAL RENDER
+    updateVariant();
+
+}); // END DOMContentLoaded
+</script>
+
 
