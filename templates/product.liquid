@@ -279,24 +279,14 @@ document.addEventListener("DOMContentLoaded", function() {
   let currentVariant = product.selected_or_first_available_variant || product.variants[0];
   let selectedOptions = currentVariant.options.slice();
 
-  const mainImg        = document.getElementById("MainImage");
+  const mainImg         = document.getElementById("MainImage");
   const thumbsContainer = document.getElementById("SideThumbs");
-  const priceMain      = document.getElementById("PriceMain");
-  const priceBox       = document.getElementById("BuyBoxPrice");
-  const stockBox       = document.getElementById("StockBox");
-  const qtySelect      = document.getElementById("QtySelect");
-  const variantIdInput = document.getElementById("VariantIdInput");
-  const buyNowBtn      = document.getElementById("BuyNowBtn");
-
-  const galleryModal   = document.getElementById("ImageGalleryModal");
-  const galleryCarousel = document.getElementById("ImageGalleryCarousel");
-  const galleryClose   = document.getElementById("ImageGalleryClose");
-  const galleryBackdrop = document.querySelector(".image-gallery-backdrop");
-
-  const sizeChartModal = document.getElementById("SizeChartModal");
-  const sizeChartButton = document.getElementById("SizeChartButton");
-  const sizeChartClose  = document.getElementById("SizeChartClose");
-  const sizeChartBackdrop = document.querySelector(".size-chart-backdrop");
+  const priceMain       = document.getElementById("PriceMain");
+  const priceBox        = document.getElementById("BuyBoxPrice");
+  const stockBox        = document.getElementById("StockBox");
+  const qtySelect       = document.getElementById("QtySelect");
+  const variantIdInput  = document.getElementById("VariantIdInput");
+  const buyNowBtn       = document.getElementById("BuyNowBtn");
 
   function clean(url) {
     return url ? url.split("?")[0] : "";
@@ -309,76 +299,55 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  function findVariantByOptions(options) {
-    return product.variants.find(v => JSON.stringify(v.options) === JSON.stringify(options))
-      || product.variants[0];
+  function findVariantByOptions(opts) {
+    return product.variants.find(v =>
+      JSON.stringify(v.options) === JSON.stringify(opts)
+    ) || product.variants[0];
   }
 
   function getMediaForVariant(variant) {
-    let media = [];
-
     const colorName = (variant.options[0] || "").toLowerCase().trim();
     const firstWord = colorName.split(" ")[0];
 
-    // A) TRUE VARIANT-ASSIGNED IMAGES
-    media = product.media.filter(m =>
+    // 1. Exact variant media
+    let media = product.media.filter(m =>
       Array.isArray(m.variant_ids) && m.variant_ids.includes(variant.id)
     );
-    if (media.length > 0) return media;
+    if (media.length) return media;
 
-    // B) MATCH NAME EXACTLY IN ALT/FILENAME
+    // 2. Filename/alt contains full color name
     media = product.media.filter(m => {
       const alt = (m.alt || "").toLowerCase();
       const src = clean(m.src || "").toLowerCase();
       return alt.includes(colorName) || src.includes(colorName);
     });
-    if (media.length > 0) return media;
+    if (media.length) return media;
 
-    // C) MATCH FIRST WORD OF COLOR
+    // 3. Filename/alt contains first word of color
     media = product.media.filter(m => {
       const alt = (m.alt || "").toLowerCase();
       const src = clean(m.src || "").toLowerCase();
       return alt.includes(firstWord) || src.includes(firstWord);
     });
-    if (media.length > 0) return media;
+    if (media.length) return media;
 
-    // D) FALLBACK – return everything
+    // 4. fallback: all media
     return product.media.slice();
   }
 
   function setMainImage(src) {
-    if (!mainImg) return;
     mainImg.src = clean(src);
   }
 
   function attachThumbEvents() {
-    const thumbButtons = thumbsContainer.querySelectorAll(".product-thumb:not(.product-thumb-more)");
-
-    thumbButtons.forEach(btn => {
+    document.querySelectorAll(".product-thumb:not(.product-thumb-more)").forEach(btn => {
       btn.addEventListener("click", () => {
         const src = btn.dataset.mediaSrc;
         setMainImage(src);
-        thumbButtons.forEach(b => b.classList.remove("is-active"));
+        document.querySelectorAll(".product-thumb").forEach(x => x.classList.remove("is-active"));
         btn.classList.add("is-active");
       });
     });
-
-    const moreBtn = thumbsContainer.querySelector(".product-thumb-more");
-    if (moreBtn) {
-      moreBtn.addEventListener("click", () => {
-        const media = getMediaForVariant(currentVariant);
-
-        galleryCarousel.innerHTML = "";
-        media.forEach(m => {
-          const img = document.createElement("img");
-          img.className = "gallery-big-image";
-          img.src = clean(m.src);
-          galleryCarousel.appendChild(img);
-        });
-
-        galleryModal.classList.add("is-open");
-      });
-    }
   }
 
   function renderThumbsForVariant(variant) {
@@ -389,26 +358,24 @@ document.addEventListener("DOMContentLoaded", function() {
 
     media.forEach((m, index) => {
       if (index < max) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "product-thumb" + (index === 0 ? " is-active" : "");
-        btn.dataset.mediaSrc = clean(m.src);
-
-        const img = document.createElement("img");
-        img.src = clean(m.src);
-        img.width = 120;
-
-        btn.appendChild(img);
-        thumbsContainer.appendChild(btn);
+        thumbsContainer.innerHTML += `
+          <button type="button"
+            class="product-thumb ${index === 0 ? "is-active" : ""}"
+            data-media-src="${clean(m.src)}">
+            <img src="${clean(m.src)}" width="120">
+          </button>
+        `;
       }
     });
 
     if (media.length > max) {
-      const moreBtn = document.createElement("button");
-      moreBtn.className = "product-thumb product-thumb-more";
-      moreBtn.dataset.more = "true";
-      moreBtn.innerText = "+" + (media.length - max);
-      thumbsContainer.appendChild(moreBtn);
+      thumbsContainer.innerHTML += `
+        <button type="button"
+          class="product-thumb product-thumb-more"
+          data-more="true">
+          +${media.length - max}
+        </button>
+      `;
     }
 
     setMainImage(media[0].src);
@@ -417,27 +384,22 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function syncQuantity(variant) {
     qtySelect.innerHTML = "";
-    let max = variant.inventory_management ? variant.inventory_quantity : 50;
 
+    let max = variant.inventory_management ? variant.inventory_quantity : 50;
     if (max < 1) max = 1;
     if (max > 50) max = 50;
 
     for (let i = 1; i <= max; i++) {
-      const opt = document.createElement("option");
-      opt.value = i;
-      opt.textContent = i;
-      qtySelect.appendChild(opt);
+      qtySelect.innerHTML += `<option value="${i}">${i}</option>`;
     }
   }
 
   function updateVariantDetails() {
     currentVariant = findVariantByOptions(selectedOptions);
 
-    // Update price
     priceMain.textContent = moneyFormat(currentVariant.price);
     priceBox.textContent = moneyFormat(currentVariant.price);
 
-    // Update stock
     if (currentVariant.available) {
       stockBox.textContent = "In stock";
       stockBox.style.color = "#16a34a";
@@ -446,13 +408,9 @@ document.addEventListener("DOMContentLoaded", function() {
       stockBox.style.color = "#dc2626";
     }
 
-    // Update variant ID for add to cart
     variantIdInput.value = currentVariant.id;
 
-    // Update quantity
     syncQuantity(currentVariant);
-
-    // Update images
     renderThumbsForVariant(currentVariant);
   }
 
@@ -464,7 +422,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
       selectedOptions[idx] = val;
 
-      document.querySelectorAll(".color-swatch").forEach(b => b.classList.remove("is-active"));
+      document.querySelectorAll(".color-swatch").forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
 
       document.getElementById("SelectedColor").textContent = val;
@@ -481,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
       selectedOptions[idx] = val;
 
-      document.querySelectorAll(".size-pill").forEach(b => b.classList.remove("is-active"));
+      document.querySelectorAll(".size-pill").forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
 
       document.getElementById("SelectedSize").textContent = val;
@@ -490,22 +448,15 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  // BUY NOW BUTTON
+  // BUY NOW
   buyNowBtn.addEventListener("click", () => {
     window.location.href = `/cart/${currentVariant.id}:1?checkout=true`;
   });
 
-  // GALLERY EXIT
-  galleryClose.addEventListener("click", () => galleryModal.classList.remove("is-open"));
-  galleryBackdrop.addEventListener("click", () => galleryModal.classList.remove("is-open"));
-
-  // SIZE CHART HANDLERS
-  sizeChartButton.addEventListener("click", () => sizeChartModal.classList.add("is-open"));
-  sizeChartClose.addEventListener("click", () => sizeChartModal.classList.remove("is-open"));
-  sizeChartBackdrop.addEventListener("click", () => sizeChartModal.classList.remove("is-open"));
-
-  // INITIAL LOAD
+  // INITIAL
   updateVariantDetails();
 
 });
 </script>
+
+
