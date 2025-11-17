@@ -17,52 +17,37 @@
 <body>
 
   <!-- TOP NAVBAR (Amazon-style) -->
-  <header class="top-nav">
-    <div class="nav-left">
-      <a class="nav-logo" href="{{ routes.root_url }}">
-        <img 
-            src="{{ 'gents.png' | asset_url }}" 
-            alt="Gents" 
-            class="nav-gents-logo"
-        />
-      </a>
+    <div class="top-nav">
 
-      {% if customer and customer.default_address %}
-        <button class="nav-location">
-          Delivering to {{ customer.default_address.city }}, {{ customer.default_address.zip }}
-        </button>
-      {% else %}
-        <button class="nav-location">
-          Set delivery location
-        </button>
-      {% endif %}
+    <!-- LEFT: Logo + Location -->
+    <div class="nav-left">
+        <a href="/" class="nav-logo">
+        <img src="{{ 'gents.png' | asset_url }}" class="nav-gents-logo">
+        </a>
+        <button class="nav-location">Set delivery location</button>
     </div>
 
-    <div class="nav-center">
-      <form action="/search" method="get" class="nav-search">
+    <!-- MIDDLE: Search -->
+    <form action="/search" method="get" class="nav-search">
         <input type="search" name="q" placeholder="Search products">
         <button type="submit">Search</button>
-      </form>
-    </div>
+    </form>
 
+    <!-- RIGHT: Language + Links -->
     <div class="nav-right">
-      <div class="nav-lang">
-        <select name="lang">
-          <option value="en" selected>EN</option>
-          <option value="es">ES</option>
+        <select id="LangSelect">
+        <option value="EN">EN</option>
+        <option value="ES">ES</option>
         </select>
-      </div>
 
-      <a href="/account" class="nav-orders">Orders</a>
-      <a href="/account" class="nav-account">My Account</a>
-
-      <a href="{{ routes.cart_url }}" class="nav-cart">
-        Cart ({{ cart.item_count }})
-      </a>
+        <a href="/account">My Account</a>
+        <a href="/orders">Orders</a>
+        <a href="/cart">Cart ({{ cart.item_count }})</a>
     </div>
+
+    </div>
+
   </header>
-
-
 
   <!-- PAGE LAYOUT (Left sidebar + main content) -->
   <div class="layout">
