@@ -6,81 +6,67 @@
   <!-- LEFT COLUMN -->
   <div class="product-gallery">
 
-    <!-- ALWAYS SHOW ALL IMAGES -->
     <div class="product-gallery-side" id="SideThumbs">
       {% for media in product.media %}
         {% if forloop.index0 < max_thumbs %}
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="product-thumb{% if forloop.first %} is-active{% endif %}"
-            data-media-src="{{ media | image_url: width: 1200 }}"
-          >
+            data-media-src="{{ media | image_url: width: 1200 }}">
             <img src="{{ media | image_url: width: 120 }}">
           </button>
         {% endif %}
       {% endfor %}
 
       {% if product.media.size > max_thumbs %}
-        <button class="product-thumb product-thumb-more">
-          +{{ product.media.size | minus: max_thumbs }}
-        </button>
+        <button class="product-thumb product-thumb-more">+{{ product.media.size | minus: max_thumbs }}</button>
       {% endif %}
     </div>
 
     <!-- MAIN IMAGE -->
     <div class="product-gallery-main">
-      <img 
-        id="MainImage"
-        class="product-main-image"
-        src="{{ initial_variant.featured_media | default: product.media.first | image_url: width: 1200 }}"
-        alt="{{ product.title }}"
-      >
+      <img id="MainImage" class="product-main-image"
+           src="{{ initial_variant.featured_media | default: product.media.first | image_url: width: 1200 }}">
     </div>
 
   </div>
 
 
-  <!-- MIDDLE COLUMN -->
+
+  <!-- MIDDLE CONTENT -->
   <div class="product-main-info">
 
     <h1 class="product-title">{{ product.title }}</h1>
-    <div class="product-rating-placeholder">★★★★☆ <span>Rating coming soon</span></div>
 
     <div class="product-price-main" id="PriceMain">
       {{ initial_variant.price | money }}
     </div>
 
     {% assign option_count = product.options_with_values.size %}
-
     <div class="product-selector">
 
-      <!-- COLOR -->
       {% if option_count >= 1 %}
         {% assign color_opt = product.options_with_values[0] %}
+
         <div class="selector-block">
           <div class="selector-label-row">
-            <div class="selector-label">
-              Color: <span id="SelectedColor">{{ color_opt.selected_value }}</span>
-            </div>
+            Color: <span id="SelectedColor">{{ color_opt.selected_value }}</span>
           </div>
 
           <div class="color-swatch-grid">
             {% for value in color_opt.values %}
-              {% assign swatch_img = blank %}
+              {% assign swatch = blank %}
               {% for v in product.variants %}
                 {% if v.option1 == value and v.featured_media %}
-                  {% assign swatch_img = v.featured_media.preview_image.src %}
+                  {% assign swatch = v.featured_media.preview_image.src %}
                 {% endif %}
               {% endfor %}
 
-              <button 
-                type="button"
+              <button
                 class="color-swatch{% if color_opt.selected_value == value %} is-active{% endif %}"
-                data-option-index="0"
-                data-option-value="{{ value }}"
-              >
-                {% if swatch_img %}
-                  <img src="{{ swatch_img | img_url: '120x' }}">
+                data-option-value="{{ value }}">
+                {% if swatch %}
+                  <img src="{{ swatch | img_url: '120x' }}">
                 {% endif %}
                 <span>{{ value }}</span>
               </button>
@@ -90,47 +76,40 @@
         </div>
       {% endif %}
 
-      <!-- SIZE -->
+
       {% if option_count >= 2 %}
         {% assign size_opt = product.options_with_values[1] %}
+
         <div class="selector-block">
           <div class="selector-label-row">
-            <div class="selector-label">
-              Size: <span id="SelectedSize">{{ size_opt.selected_value }}</span>
-            </div>
-            <button type="button" id="SizeChartButton" class="size-chart-link">Size chart</button>
+            Size: <span id="SelectedSize">{{ size_opt.selected_value }}</span>
+            <button id="SizeChartButton" class="size-chart-link">Size chart</button>
           </div>
 
           <div class="size-pill-grid">
             {% for value in size_opt.values %}
-              <button 
-                type="button"
-                class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
-                data-option-index="1"
-                data-option-value="{{ value }}"
-              >
+              <button class="size-pill{% if size_opt.selected_value == value %} is-active{% endif %}"
+                      data-option-value="{{ value }}">
                 {{ value }}
               </button>
             {% endfor %}
           </div>
-
         </div>
+
       {% endif %}
 
     </div>
 
-    <!-- PRODUCT DETAILS -->
     <div class="product-details-section">
       <h3>Product details</h3>
-      <div class="product-details-content">
-        {{ product.description | strip_html }}
-      </div>
+      <div class="product-details-content">{{ product.description | strip_html }}</div>
     </div>
 
   </div>
 
 
-  <!-- RIGHT (BUY BOX) -->
+
+  <!-- RIGHT BUY BOX -->
   <div class="product-buy-box">
 
     <div class="buy-box-price" id="BuyBoxPrice">
@@ -138,7 +117,11 @@
     </div>
 
     <div id="StockBox" class="buy-box-stock">
-      {% if initial_variant.available %}In stock{% else %}Out of stock{% endif %}
+      {% if initial_variant.inventory_policy == 'continue' or initial_variant.inventory_quantity > 0 %}
+        In stock
+      {% else %}
+        Out of stock
+      {% endif %}
     </div>
 
     {% form 'product', product, id: 'ProductForm' %}
@@ -154,15 +137,19 @@
         <button class="btn btn-outline" id="BuyNowBtn" type="button">Buy Now</button>
       </div>
     {% endform %}
+
   </div>
 
 </section>
 
-<!-- FULLSCREEN GALLERY -->
+
+
+<!-- POPUP GALLERY -->
 <div class="image-gallery-modal" id="ImageGalleryModal">
   <div class="image-gallery-backdrop"></div>
 
   <div class="image-gallery-content gallery-popup-layout">
+
     <button id="ImageGalleryClose" class="image-gallery-close">×</button>
 
     <div class="popup-main-wrapper">
@@ -170,6 +157,7 @@
     </div>
 
     <div class="popup-grid" id="PopupThumbs"></div>
+
   </div>
 </div>
 
@@ -180,163 +168,134 @@
   <div class="size-chart-backdrop"></div>
   <div class="size-chart-content">
     <button id="SizeChartClose" class="size-chart-close">×</button>
+
     <h3>Size Chart</h3>
+
     <div class="size-chart-grid">
-  <table>
-    <tr>
-      <th>Size</th>
-      <th>Bust (in)</th>
-      <th>Length (in)</th>
-      <th>Sleeve (in)</th>
-    </tr>
-    <tr><td>S</td><td>34–35</td><td>25</td><td>22</td></tr>
-    <tr><td>M</td><td>36–37</td><td>25.5</td><td>22.5</td></tr>
-    <tr><td>L</td><td>38–40</td><td>26</td><td>23</td></tr>
-    <tr><td>XL</td><td>41–43</td><td>26.5</td><td>23.5</td></tr>
-    <tr><td>XXL</td><td>44–46</td><td>27</td><td>24</td></tr>
-  </table>
+      <table>
+        <tr><th>Size</th><th>Bust</th><th>Length</th><th>Sleeve</th></tr>
+        <tr><td>S</td><td>34–35</td><td>25</td><td>22</td></tr>
+        <tr><td>M</td><td>36–37</td><td>25.5</td><td>22.5</td></tr>
+        <tr><td>L</td><td>38–40</td><td>26</td><td>23</td></tr>
+        <tr><td>XL</td><td>41–43</td><td>26.5</td><td>23.5</td></tr>
+        <tr><td>XXL</td><td>44–46</td><td>27</td><td>24</td></tr>
+      </table>
+    </div>
+
   </div>
-  </div>
-  </div>
+</div>
+
 
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
   const product = {{ product | json }};
-
-  /* ========= SAFE VARIANT SETUP ========= */
-  let currentVariant =
-    product.selected_or_first_available_variant ||
-    product.variants?.[0] ||
-    { id: null, price: 0, available: true, options: [] };
-
-  let selectedOptions = Array.isArray(currentVariant.options)
-    ? [...currentVariant.options]
-    : [];
+  let currentVariant = product.selected_or_first_available_variant;
+  let selectedOptions = [...currentVariant.options];
 
   const mainImg = document.getElementById("MainImage");
+  const variantIdInput = document.getElementById("VariantIdInput");
 
-  /* ========= POPUP GALLERY ELEMENTS ========= */
-  const galleryModal = document.getElementById("ImageGalleryModal");
-  const galleryGrid = document.getElementById("ImageGalleryGrid");
-  const galleryClose = document.getElementById("ImageGalleryClose");
-  const galleryBackdrop = document.querySelector(".image-gallery-backdrop");
+  /* POPUP GALLERY */
+  const popup = document.getElementById("ImageGalleryModal");
+  const popupClose = document.getElementById("ImageGalleryClose");
+  const popupBackdrop = document.querySelector(".image-gallery-backdrop");
+  const popupMain = document.getElementById("PopupMainImage");
+  const popupThumbs = document.getElementById("PopupThumbs");
 
-  /* ========= SIZE CHART ========= */
-  const sizeModal = document.getElementById("SizeChartModal");
+  function clean(url){ return url.split("?")[0]; }
+
+  function setupThumbs(){
+    document.querySelectorAll(".product-thumb").forEach(btn => {
+      if(btn.classList.contains("product-thumb-more")){
+        btn.onclick = openPopup;
+        return;
+      }
+      btn.onclick = () => {
+        mainImg.src = clean(btn.dataset.mediaSrc);
+        document.querySelectorAll(".product-thumb").forEach(x=>x.classList.remove("is-active"));
+        btn.classList.add("is-active");
+      }
+    });
+  }
+  setupThumbs();
+
+  function openPopup(){
+    popupThumbs.innerHTML = "";
+    popupMain.src = clean(product.media[0].src);
+
+    product.media.forEach(m => {
+      const img = document.createElement("img");
+      img.src = clean(m.src);
+      img.onclick = () => popupMain.src = clean(m.src);
+      popupThumbs.appendChild(img);
+    });
+
+    popup.classList.add("is-open");
+  }
+  popupClose.onclick = () => popup.classList.remove("is-open");
+  popupBackdrop.onclick = () => popup.classList.remove("is-open");
+
+
+
+  /* COLOR SELECT */
+  document.querySelectorAll(".color-swatch").forEach(btn => {
+    btn.onclick = () => {
+      const val = btn.dataset.optionValue;
+
+      document.querySelectorAll(".color-swatch").forEach(x=>x.classList.remove("is-active"));
+      btn.classList.add("is-active");
+
+      selectedOptions[0] = val;
+
+      const newVar = product.variants.find(v =>
+        JSON.stringify(v.options) === JSON.stringify(selectedOptions)
+      );
+
+      if(newVar){
+        currentVariant = newVar;
+        mainImg.src = clean(newVar.featured_media.preview_image.src);
+        variantIdInput.value = newVar.id;
+      }
+    };
+  });
+
+
+
+  /* SIZE SELECT */
+  document.querySelectorAll(".size-pill").forEach(btn => {
+    btn.onclick = () => {
+      const val = btn.dataset.optionValue;
+
+      document.querySelectorAll(".size-pill").forEach(x=>x.classList.remove("is-active"));
+      btn.classList.add("is-active");
+
+      selectedOptions[1] = val;
+
+      const newVar = product.variants.find(v =>
+        JSON.stringify(v.options) === JSON.stringify(selectedOptions)
+      );
+
+      if(newVar){
+        currentVariant = newVar;
+        variantIdInput.value = newVar.id;
+      }
+    }
+  });
+
+
+
+  /* SIZE CHART */
+  const sizeChart = document.getElementById("SizeChartModal");
   const sizeBtn = document.getElementById("SizeChartButton");
   const sizeClose = document.getElementById("SizeChartClose");
   const sizeBackdrop = document.querySelector(".size-chart-backdrop");
 
-  function clean(url) {
-    return url ? url.split("?")[0] : "";
-  }
+  sizeBtn.onclick = ()=> sizeChart.classList.add("is-open");
+  sizeClose.onclick = ()=> sizeChart.classList.remove("is-open");
+  sizeBackdrop.onclick = ()=> sizeChart.classList.remove("is-open");
 
-  /* ========= THUMBNAILS ========= */
-  function setupThumbnailClicks() {
-    document.querySelectorAll(".product-thumb").forEach(btn => {
-      if (btn.classList.contains("product-thumb-more")) {
-        btn.onclick = openPopupGallery;
-        return;
-      }
-
-      btn.onclick = () => {
-        const src = btn.dataset.mediaSrc;
-        mainImg.src = clean(src);
-
-        document.querySelectorAll(".product-thumb")
-          .forEach(x => x.classList.remove("is-active"));
-
-        btn.classList.add("is-active");
-      };
-    });
-  }
-
-  setupThumbnailClicks();
-
-  /* ========= POPUP GALLERY CLEAN FIX ========= */
-  function openPopupGallery() {
-    const main = document.getElementById("PopupMainImage");
-    const thumbs = document.getElementById("PopupThumbs");
-
-    thumbs.innerHTML = "";
-
-    product.media.forEach((m, i) => {
-        const cleanSrc = clean(m.src);
-
-        if (i === 0) main.src = cleanSrc;
-
-        const img = document.createElement("img");
-        img.src = cleanSrc;
-
-        img.onclick = () => {
-        main.src = cleanSrc;
-        };
-
-        thumbs.appendChild(img);
-    });
-
-    galleryModal.classList.add("is-open");
-    }
-
-
-  galleryClose.onclick = () => galleryModal.classList.remove("is-open");
-  galleryBackdrop.onclick = () => galleryModal.classList.remove("is-open");
-
-  /* ========= COLOR SWITCHING ========= */
-  document.querySelectorAll(".color-swatch").forEach(btn => {
-    btn.addEventListener("click", () => {
-
-      const value = btn.dataset.optionValue;
-
-      document.querySelectorAll(".color-swatch")
-        .forEach(x => x.classList.remove("is-active"));
-
-      btn.classList.add("is-active");
-      document.getElementById("SelectedColor").textContent = value;
-
-      selectedOptions[0] = value;
-
-      let newVariant = product.variants.find(v =>
-        JSON.stringify(v.options) === JSON.stringify(selectedOptions)
-      );
-
-      if (newVariant) currentVariant = newVariant;
-
-      if (currentVariant.featured_media)
-        mainImg.src = clean(currentVariant.featured_media.preview_image.src);
-    });
-  });
-
-  /* ========= SIZE SWITCHING ========= */
-  document.querySelectorAll(".size-pill").forEach(btn => {
-    btn.addEventListener("click", () => {
-
-      const value = btn.dataset.optionValue;
-
-      document.querySelectorAll(".size-pill")
-        .forEach(x => x.classList.remove("is-active"));
-
-      btn.classList.add("is-active");
-      document.getElementById("SelectedSize").textContent = value;
-
-      selectedOptions[1] = value;
-
-      let newVariant = product.variants.find(v =>
-        JSON.stringify(v.options) === JSON.stringify(selectedOptions)
-      );
-
-      if (newVariant) currentVariant = newVariant;
-    });
-  });
-
-  /* ========= SIZE CHART ========= */
-  if (sizeBtn) sizeBtn.onclick = () => sizeModal.classList.add("is-open");
-  if (sizeClose) sizeClose.onclick = () => sizeModal.classList.remove("is-open");
-  if (sizeBackdrop) sizeBackdrop.onclick = () => sizeModal.classList.remove("is-open");
 
 });
 </script>
-
-
