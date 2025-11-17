@@ -1,14 +1,48 @@
 <!-- PRODUCT PAGE LAYOUT -->
 <section class="product-page">
 
-  <!-- LEFT COLUMN: GALLERY -->
-  <div class="product-gallery">
+<div class="product-gallery">
 
-    {% assign total_media = product.media.size %}
+  <!-- SIDE THUMBNAILS (DYNAMIC) -->
+  <div class="product-gallery-side" id="SideThumbs">
+    {% assign default_variant = product.selected_or_first_available_variant %}
+
+    {% if default_variant.featured_media %}
+      {% assign variant_media = default_variant.featured_media | media_image_url: width: 1200 %}
+    {% endif %}
+
+    {% comment %}
+      Collect all media for this variant
+    {% endcomment %}
+    {% assign variant_media_list = "" %}
+    {% for m in product.media %}
+      {% if m.variant_ids contains default_variant.id %}
+        {% assign variant_media_list = variant_media_list | append: m | append: ',' %}
+      {% endif %}
+    {% endfor %}
+
+    {% assign variant_media_array = variant_media_list | split: ',' %}
     {% assign max_thumbs = 5 %}
 
-    <!-- SIDE THUMBNAILS ONLY -->
-    <div class="product-gallery-side" id="SideThumbs">
+    {% if variant_media_array.size > 1 %}
+      {% for img in variant_media_array %}
+        {% if forloop.index0 < max_thumbs %}
+          <button 
+            type="button"
+            class="product-thumb{% if forloop.first %} is-active{% endif %}"
+            data-media-src="{{ img | image_url: width: 1200 }}"
+          >
+            <img src="{{ img | image_url: width: 120 }}" alt="">
+          </button>
+        {% elsif forloop.index0 == max_thumbs %}
+          <button type="button" class="product-thumb product-thumb-more" data-more="true">
+            +{{ variant_media_array.size | minus: max_thumbs }}
+          </button>
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      {% comment %} fallback: all media {% endcomment %}
       {% for media in product.media %}
         {% if forloop.index0 < max_thumbs %}
           <button 
@@ -20,25 +54,27 @@
           </button>
         {% elsif forloop.index0 == max_thumbs %}
           <button type="button" class="product-thumb product-thumb-more" data-more="true">
-            +{{ total_media | minus: max_thumbs }}
+            +{{ product.media.size | minus: max_thumbs }}
           </button>
           {% break %}
         {% endif %}
       {% endfor %}
-    </div>
+    {% endif %}
+  </div>
 
-    <!-- MAIN IMAGE -->
-    <div class="product-gallery-main">
-      {% assign first_media = product.media.first %}
-      <img 
-        id="MainImage"
-        class="product-main-image"
-        src="{{ first_media | image_url: width: 1200 }}"
-        alt="{{ product.title }}"
-      >
-    </div>
+  <!-- MAIN IMAGE -->
+  {% assign first_media = product.selected_or_first_available_variant.featured_media | default: product.media.first %}
+  <div class="product-gallery-main">
+    <img 
+      id="MainImage"
+      class="product-main-image"
+      src="{{ first_media | image_url: width: 1200 }}"
+      alt="{{ product.title }}"
+    >
+  </div>
 
-  </div> <!-- END LEFT COLUMN -->
+</div>
+
 
 
   <!-- MIDDLE COLUMN: TITLE, OPTIONS, DETAILS -->
