@@ -263,9 +263,6 @@ body {
   background: #fff7ed;
 }
 
-/******************************
-  AMAZON-STYLE PRODUCT PAGE
-******************************/
 .product-page {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 2.2fr) minmax(0, 1.4fr);
@@ -643,4 +640,41 @@ body {
   border: none;
   font-size: 26px;
   cursor: pointer;
+}
+
+/* ===== POPUP GALLERY (REBUILT) ===== */
+.gallery-popup-layout {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 20px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.popup-main-img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.popup-thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.popup-thumbs img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+}
+
+.popup-thumbs img:hover {
+  border-color: #f97316;
 }
