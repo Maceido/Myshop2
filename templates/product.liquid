@@ -185,45 +185,46 @@
   </div>
 </div>
 
-
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
+  /* SAFELY LOAD PRODUCT JSON */
   const product = {{ product | json }};
-  let currentVariant = product.selected_or_first_available_variant;
+
+  /* HANDLE PRODUCTS WITH NO OPTIONS */
+  let currentVariant =
+    product.selected_or_first_available_variant ||
+    product.variants?.[0] ||
+    { id: null, price: 0, available: true, options: [] };
+
+  if (!Array.isArray(currentVariant.options)) currentVariant.options = [];
+
   let selectedOptions = [...currentVariant.options];
 
   const mainImg = document.getElementById("MainImage");
   const variantIdInput = document.getElementById("VariantIdInput");
 
-  /* POPUP GALLERY */
+  /* ===============================
+     IMAGE CLEANER
+  =============================== */
+  function clean(url){
+    return url ? url.split("?")[0] : "";
+  }
+
+  /* ===============================
+     POPUP GALLERY
+  =============================== */
   const popup = document.getElementById("ImageGalleryModal");
   const popupClose = document.getElementById("ImageGalleryClose");
   const popupBackdrop = document.querySelector(".image-gallery-backdrop");
   const popupMain = document.getElementById("PopupMainImage");
   const popupThumbs = document.getElementById("PopupThumbs");
 
-  function clean(url){ return url.split("?")[0]; }
-
-  function setupThumbs(){
-    document.querySelectorAll(".product-thumb").forEach(btn => {
-      if(btn.classList.contains("product-thumb-more")){
-        btn.onclick = openPopup;
-        return;
-      }
-      btn.onclick = () => {
-        mainImg.src = clean(btn.dataset.mediaSrc);
-        document.querySelectorAll(".product-thumb").forEach(x=>x.classList.remove("is-active"));
-        btn.classList.add("is-active");
-      }
-    });
-  }
-  setupThumbs();
-
   function openPopup(){
     popupThumbs.innerHTML = "";
-    popupMain.src = clean(product.media[0].src);
+
+    let firstImg = product.media?.[0]?.src;
+    popupMain.src = clean(firstImg);
 
     product.media.forEach(m => {
       const img = document.createElement("img");
@@ -234,68 +235,99 @@ document.addEventListener("DOMContentLoaded", function() {
 
     popup.classList.add("is-open");
   }
+
   popupClose.onclick = () => popup.classList.remove("is-open");
   popupBackdrop.onclick = () => popup.classList.remove("is-open");
 
+  /* ===============================
+     THUMBNAILS
+  =============================== */
+  function setupThumbs(){
+    document.querySelectorAll(".product-thumb").forEach(btn => {
 
+      // the "+5" pop-up button
+      if(btn.classList.contains("product-thumb-more")){
+        btn.onclick = openPopup;
+        return;
+      }
 
-  /* COLOR SELECT */
+      // normal thumbnails
+      btn.onclick = () => {
+        mainImg.src = clean(btn.dataset.mediaSrc);
+
+        document.querySelectorAll(".product-thumb")
+          .forEach(x => x.classList.remove("is-active"));
+
+        btn.classList.add("is-active");
+      };
+    });
+  }
+
+  setupThumbs();
+
+  /* ===============================
+     COLOR SELECT
+  =============================== */
   document.querySelectorAll(".color-swatch").forEach(btn => {
     btn.onclick = () => {
-      const val = btn.dataset.optionValue;
+      const value = btn.dataset.optionValue;
 
-      document.querySelectorAll(".color-swatch").forEach(x=>x.classList.remove("is-active"));
+      document.querySelectorAll(".color-swatch")
+        .forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
 
-      selectedOptions[0] = val;
+      selectedOptions[0] = value;
 
-      const newVar = product.variants.find(v =>
+      const found = product.variants.find(v =>
         JSON.stringify(v.options) === JSON.stringify(selectedOptions)
       );
 
-      if(newVar){
-        currentVariant = newVar;
-        mainImg.src = clean(newVar.featured_media.preview_image.src);
-        variantIdInput.value = newVar.id;
+      if(found){
+        currentVariant = found;
+        variantIdInput.value = found.id;
+
+        if(found.featured_media){
+          mainImg.src = clean(found.featured_media.preview_image.src);
+        }
       }
     };
   });
 
-
-
-  /* SIZE SELECT */
+  /* ===============================
+     SIZE SELECT
+  =============================== */
   document.querySelectorAll(".size-pill").forEach(btn => {
     btn.onclick = () => {
-      const val = btn.dataset.optionValue;
+      const value = btn.dataset.optionValue;
 
-      document.querySelectorAll(".size-pill").forEach(x=>x.classList.remove("is-active"));
+      document.querySelectorAll(".size-pill")
+        .forEach(x => x.classList.remove("is-active"));
       btn.classList.add("is-active");
 
-      selectedOptions[1] = val;
+      selectedOptions[1] = value;
 
-      const newVar = product.variants.find(v =>
+      const found = product.variants.find(v =>
         JSON.stringify(v.options) === JSON.stringify(selectedOptions)
       );
 
-      if(newVar){
-        currentVariant = newVar;
-        variantIdInput.value = newVar.id;
+      if(found){
+        currentVariant = found;
+        variantIdInput.value = found.id;
       }
-    }
+    };
   });
 
-
-
-  /* SIZE CHART */
-  const sizeChart = document.getElementById("SizeChartModal");
+  /* ===============================
+     SIZE CHART POPUP
+  =============================== */
+  const sizeModal = document.getElementById("SizeChartModal");
   const sizeBtn = document.getElementById("SizeChartButton");
   const sizeClose = document.getElementById("SizeChartClose");
   const sizeBackdrop = document.querySelector(".size-chart-backdrop");
 
-  sizeBtn.onclick = ()=> sizeChart.classList.add("is-open");
-  sizeClose.onclick = ()=> sizeChart.classList.remove("is-open");
-  sizeBackdrop.onclick = ()=> sizeChart.classList.remove("is-open");
-
+  if(sizeBtn) sizeBtn.onclick = () => sizeModal.classList.add("is-open");
+  if(sizeClose) sizeClose.onclick = () => sizeModal.classList.remove("is-open");
+  if(sizeBackdrop) sizeBackdrop.onclick = () => sizeModal.classList.remove("is-open");
 
 });
 </script>
