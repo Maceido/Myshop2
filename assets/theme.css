@@ -113,7 +113,7 @@ body {
 }
 
 .nav-gents-logo {
-  height: 32px;       /* make it smaller */
+  height: 120px;       /* make it smaller */
   width: auto;        /* keep proportions */
   display: block;
   object-fit: contain;
@@ -121,7 +121,7 @@ body {
 
 @media (max-width: 600px) {
   .nav-gents-logo {
-    height: 26px;     /* even smaller for mobile */
+    height: 60px;     /* even smaller for mobile */
   }
 }
 
