@@ -99,9 +99,9 @@
       {% endif %}
 
       <!-- SIZE OPTION -->
-      {% assign size_opt = option_count >= 2 
-        ? product.options_with_values[1] 
-        : blank %}
+      {% if size_opt %}
+        <div class="selector-block">
+
 
       {% if size_opt %}
         <div class="selector-block">
